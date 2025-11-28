@@ -167,16 +167,19 @@ const Dashboard = () => {
     <div className="container py-8">
       {/* Vibe-coded credit */}
       <div className="mb-3 text-center">
-        <div className="inline-block border border-slate-700/50 rounded-md px-3 py-2" style={{ backgroundColor: 'rgba(226, 232, 240, 0.5)' }}>
-          <p className="text-xs text-muted m-0">
+        <div className="inline-block border border-slate-700/50 rounded-md px-3 py-2" style={{ backgroundColor: 'var(--color-surface-hover)', opacity: 0.8 }}>
+          <p className="text-xs m-0" style={{ color: 'var(--color-text-muted)' }}>
             {t('vibeCodedBy')}{' '}
-            <span className="text-white">Ocean LITMERS</span>
+            <span style={{ color: 'var(--color-text)' }}>Ocean LITMERS</span>
             {' · '}
             <a 
               href="https://github.com/cigrocean/SwaggerNav" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-primary hover:text-primary-hover underline transition-colors"
+              className="underline transition-colors"
+              style={{ color: 'var(--color-primary)' }}
+              onMouseEnter={(e) => e.target.style.color = 'var(--color-primary-hover)'}
+              onMouseLeave={(e) => e.target.style.color = 'var(--color-primary)'}
             >
               {t('checkAnotherWork')}
             </a>
@@ -185,7 +188,10 @@ const Dashboard = () => {
               href="https://github.com/cigrocean/MeetingRoomBooking" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-primary hover:text-primary-hover underline transition-colors"
+              className="underline transition-colors"
+              style={{ color: 'var(--color-primary)' }}
+              onMouseEnter={(e) => e.target.style.color = 'var(--color-primary-hover)'}
+              onMouseLeave={(e) => e.target.style.color = 'var(--color-primary)'}
             >
               {t('github')}
             </a>
