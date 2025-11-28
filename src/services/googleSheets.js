@@ -264,7 +264,7 @@ const ROOMS = [
     capacity: 12, // Inferred "Large room"
     features: ["Large Room", "TV"],
     image_url:
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1689326232193-d55f0b7965eb?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3Ds",
   },
   {
     id: "da-lat",
@@ -272,7 +272,7 @@ const ROOMS = [
     capacity: 6, // Inferred "Small room"
     features: ["Small Room"],
     image_url:
-      "https://images.unsplash.com/photo-1577412647305-991150c7d163?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1609424360486-c5b2636741d1?q=80&w=2370&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
 ];
 
@@ -1268,7 +1268,14 @@ export const fetchAvailableTimeSlots = async () => {
   }
 };
 
-// Get Google Sheet URL
-export const getSheetUrl = () => {
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+// Get Google Sheet URL for current month
+export const getSheetUrl = async () => {
+  try {
+    const gid = await getCurrentMonthSheetGID();
+    return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${gid}`;
+  } catch (error) {
+    // Fallback to base URL if GID detection fails
+    console.warn("Failed to get current month GID, using base URL:", error);
+    return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+  }
 };

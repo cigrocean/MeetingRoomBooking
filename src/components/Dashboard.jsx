@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [alertDialog, setAlertDialog] = useState(null); // { type: 'success'|'error', title, message, link }
   const [toast, setToast] = useState(null); // { type: 'success'|'error', message }
+  const [sheetUrl, setSheetUrl] = useState('#');
 
   const loadData = async () => {
     try {
@@ -41,6 +42,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadData();
+    // Load sheet URL
+    getSheetUrl().then(url => setSheetUrl(url)).catch(err => {
+      console.warn("Failed to load sheet URL:", err);
+      setSheetUrl(`https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || ''}/edit`);
+    });
     // Poll every 30 seconds
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
@@ -245,7 +251,7 @@ const Dashboard = () => {
       {/* View Sheet Link */}
       <div className="mb-8">
         <a
-          href={getSheetUrl()}
+          href={sheetUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-success to-green-600 hover:from-green-600 hover:to-green-700 text-white-fixed font-medium shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 text-sm no-underline"
