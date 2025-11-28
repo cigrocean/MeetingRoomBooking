@@ -459,7 +459,7 @@ const BookingModal = ({
           >
             {loading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-5 h-5 flex-shrink-0 animate-spin" />
                 <span>{t("booking")}</span>
               </>
             ) : (

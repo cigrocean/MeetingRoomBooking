@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Monitor, Wifi, Calendar, Clock } from 'lucide-react';
+import { Users, Monitor, Wifi, Calendar, Clock, Gamepad2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useLanguage } from '../hooks/useLanguage';
 import { getTranslation } from '../utils/translations';
@@ -8,6 +8,7 @@ const FeatureIcon = ({ feature }) => {
   const lower = feature.toLowerCase();
   if (lower.includes('tv') || lower.includes('monitor') || lower.includes('projector')) return <Monitor size={14} />;
   if (lower.includes('wifi')) return <Wifi size={14} />;
+  if (lower.includes('ps4') || lower.includes('playstation') || lower.includes('game')) return <Gamepad2 size={14} />;
   return <div className="w-3 h-3 rounded-full bg-current" />;
 };
 

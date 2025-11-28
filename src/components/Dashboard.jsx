@@ -170,7 +170,7 @@ const Dashboard = () => {
 
 
   return (
-    <div className="container py-8">
+    <div className="container py-8" style={{ position: 'relative', zIndex: 1 }}>
       {/* Vibe-coded credit */}
       <div className="mb-3 text-center">
         <div className="inline-block border border-slate-700/50 rounded-md px-3 py-2" style={{ backgroundColor: 'var(--color-surface-hover)', opacity: 0.8 }}>
@@ -255,12 +255,12 @@ const Dashboard = () => {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-success to-green-600 hover:from-green-600 hover:to-green-700 text-white-fixed font-medium shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 text-sm no-underline"
-          style={{ textDecoration: 'none', paddingLeft: '0.75rem', paddingRight: '0.75rem', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
+          style={{ textDecoration: 'none', paddingLeft: '0.75rem', paddingRight: '0.75rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', display: 'inline-flex' }}
         >
           <svg style={{ width: '0.875rem', height: '0.875rem', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
-          <span style={{ fontSize: '0.875rem', lineHeight: '1.25rem' }}>{t('viewSheet')}</span>
+          <span>{t('viewSheet')}</span>
         </a>
       </div>
 

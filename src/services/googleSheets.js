@@ -82,13 +82,61 @@ const getAccessToken = async () => {
   );
 };
 
+// Cache for GID lookups to avoid unnecessary API calls
+const gidCache = {
+  currentMonth: null,
+  currentMonthKey: null, // Format: "YYYY-MM" to detect month changes
+  futureMonths: {}, // Format: "YYYY-MM" -> GID
+};
+
+// Helper function to detect GID via CSV (no API quota usage)
+const detectGidViaCSV = async (targetMonthName, targetYearStr) => {
+  // Try to find the sheet by checking CSV data from multiple potential GIDs
+  const commonGids = ["0", "240206239"]; // 0 is usually the first sheet, 240206239 is from the user's link
+
+  for (const gid of commonGids) {
+    try {
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
+      const csvResponse = await fetch(csvUrl);
+      if (csvResponse.ok) {
+        const csvText = await csvResponse.text();
+        const rows = csvText.split("\n");
+        if (rows.length > 0) {
+          const firstCell = rows[0]
+            .split(",")[0]
+            ?.toUpperCase()
+            .replace(/"/g, "")
+            .trim();
+          // Check if first cell contains target month name
+          if (firstCell && firstCell.includes(targetMonthName)) {
+            console.log(
+              `✅ Found matching sheet via CSV for ${targetMonthName} (GID: ${gid})`
+            );
+            return gid;
+          }
+        }
+      }
+    } catch (e) {
+      continue;
+    }
+  }
+  return null;
+};
+
 // Get the GID for a specific month/year's sheet (auto-detected using CSV - no auth needed for public sheets)
 // If date is not provided, uses current month
+// Optimized to prefer CSV detection to avoid API quota usage
 const getMonthSheetGID = async (date = null) => {
   // Define variables outside try block so they're available in catch block
   const targetDate = date || new Date();
   const targetMonth = targetDate.getMonth();
   const targetYear = targetDate.getFullYear();
+  const monthKey = `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}`; // YYYY-MM format
+  const isCurrentMonth =
+    !date ||
+    (targetMonth === new Date().getMonth() &&
+      targetYear === new Date().getFullYear());
+
   const monthNames = [
     "JANUARY",
     "FEBRUARY",
@@ -121,11 +169,48 @@ const getMonthSheetGID = async (date = null) => {
   const readableMonthName = monthNamesReadable[targetMonth];
   const targetYearStr = targetYear.toString();
 
+  // Check cache first (only for current month to avoid stale data)
+  if (
+    isCurrentMonth &&
+    gidCache.currentMonth &&
+    gidCache.currentMonthKey === monthKey
+  ) {
+    console.log(
+      `✅ Using cached GID for current month: ${gidCache.currentMonth}`
+    );
+    return gidCache.currentMonth;
+  }
+
+  // Check cache for future months
+  if (!isCurrentMonth && gidCache.futureMonths[monthKey]) {
+    console.log(
+      `✅ Using cached GID for ${targetMonthName} ${targetYear}: ${gidCache.futureMonths[monthKey]}`
+    );
+    return gidCache.futureMonths[monthKey];
+  }
+
   try {
     console.log(`🔍 Looking for sheet: ${targetMonthName} ${targetYear}`);
 
-    // Try to get all sheets via API (requires access token) or fallback to CSV detection
-    // First, try to get sheet list via API to search all sheets
+    // For current month, prefer CSV detection first (no API quota usage)
+    // For future months, try API first to get accurate sheet list
+    const preferCSV = isCurrentMonth;
+
+    if (preferCSV) {
+      // Try CSV detection first for current month (no API quota)
+      const csvGid = await detectGidViaCSV(targetMonthName, targetYearStr);
+      if (csvGid) {
+        // Cache the result
+        gidCache.currentMonth = csvGid;
+        gidCache.currentMonthKey = monthKey;
+        console.log(
+          `✅ Found current month sheet via CSV (GID: ${csvGid}), cached for future requests`
+        );
+        return csvGid;
+      }
+    }
+
+    // Try to get all sheets via API (requires access token) - only if CSV failed or for future months
     try {
       const accessToken = await getAccessToken();
       const sheetsResponse = await fetch(
@@ -156,6 +241,13 @@ const getMonthSheetGID = async (date = null) => {
             console.log(
               `✅ Found matching sheet: "${sheet.properties.title}" (GID: ${sheetId}) for ${targetMonthName} ${targetYear}`
             );
+            // Cache the result
+            if (isCurrentMonth) {
+              gidCache.currentMonth = sheetId;
+              gidCache.currentMonthKey = monthKey;
+            } else {
+              gidCache.futureMonths[monthKey] = sheetId;
+            }
             return sheetId;
           }
         }
@@ -169,6 +261,13 @@ const getMonthSheetGID = async (date = null) => {
             console.log(
               `✅ Found sheet by month name only: "${sheet.properties.title}" (GID: ${sheetId}) for ${targetMonthName}`
             );
+            // Cache the result
+            if (isCurrentMonth) {
+              gidCache.currentMonth = sheetId;
+              gidCache.currentMonthKey = monthKey;
+            } else {
+              gidCache.futureMonths[monthKey] = sheetId;
+            }
             return sheetId;
           }
         }
@@ -181,34 +280,16 @@ const getMonthSheetGID = async (date = null) => {
     }
 
     // Fallback: Detect sheet by reading CSV data directly (no auth required for public sheets)
-    // Try to find the sheet by checking CSV data from multiple potential GIDs
-    const commonGids = ["0", "240206239"]; // 0 is usually the first sheet, 240206239 is from the user's link
-
-    for (const gid of commonGids) {
-      try {
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
-        const csvResponse = await fetch(csvUrl);
-        if (csvResponse.ok) {
-          const csvText = await csvResponse.text();
-          const rows = csvText.split("\n");
-          if (rows.length > 0) {
-            const firstCell = rows[0]
-              .split(",")[0]
-              ?.toUpperCase()
-              .replace(/"/g, "")
-              .trim();
-            // Check if first cell contains target month name
-            if (firstCell && firstCell.includes(targetMonthName)) {
-              console.log(
-                `✅ Found matching sheet via CSV for ${targetMonthName} (GID: ${gid})`
-              );
-              return gid;
-            }
-          }
-        }
-      } catch (e) {
-        continue;
+    const csvGid = await detectGidViaCSV(targetMonthName, targetYearStr);
+    if (csvGid) {
+      // Cache the result
+      if (isCurrentMonth) {
+        gidCache.currentMonth = csvGid;
+        gidCache.currentMonthKey = monthKey;
+      } else {
+        gidCache.futureMonths[monthKey] = csvGid;
       }
+      return csvGid;
     }
 
     // If no match found, check if it's a future month/year
@@ -232,7 +313,15 @@ const getMonthSheetGID = async (date = null) => {
     console.warn(
       `⚠️ Could not find sheet for ${targetMonthName} ${targetYear}, using first sheet (GID: 0) as fallback`
     );
-    return "0";
+    const fallbackGid = "0";
+    // Cache the fallback
+    if (isCurrentMonth) {
+      gidCache.currentMonth = fallbackGid;
+      gidCache.currentMonthKey = monthKey;
+    } else {
+      gidCache.futureMonths[monthKey] = fallbackGid;
+    }
+    return fallbackGid;
   } catch (error) {
     // Check if this is already our custom error message for missing sheets
     if (error.message.includes("Unable to book for")) {
@@ -262,7 +351,7 @@ const ROOMS = [
     id: "nha-trang",
     name: "Nha Trang",
     capacity: 12, // Inferred "Large room"
-    features: ["Large Room", "TV"],
+    features: ["Large Room", "TV", "PS4"],
     image_url:
       "https://images.unsplash.com/photo-1689326232193-d55f0b7965eb?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3Ds",
   },

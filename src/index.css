@@ -60,6 +60,16 @@ body {
   min-width: 320px;
   min-height: 100vh;
   width: 100%;
+  /* Subtle backdrop blur effect that reflects room card backgrounds */
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: linear-gradient(
+    135deg,
+    var(--color-surface) 0%,
+    var(--color-bg) 50%,
+    var(--color-surface-hover) 100%
+  );
+  background-attachment: fixed;
 }
 
 #root {
@@ -67,6 +77,46 @@ body {
   height: 100%;
   min-height: 100vh;
   margin: 0 auto;
+  /* Subtle glassmorphism effect */
+  position: relative;
+}
+
+/* Add a subtle overlay for depth */
+#root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 20% 50%,
+    rgba(59, 130, 246, 0.05) 0%,
+    transparent 50%
+  ),
+  radial-gradient(
+    circle at 80% 80%,
+    rgba(16, 185, 129, 0.05) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Dark mode overlay adjustments */
+@media (prefers-color-scheme: dark) {
+  #root::before {
+    background: radial-gradient(
+      circle at 20% 50%,
+      rgba(59, 130, 246, 0.08) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(16, 185, 129, 0.08) 0%,
+      transparent 50%
+    );
+  }
 }
 
 button {
@@ -336,6 +386,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: .5; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Shimmer animation for skeleton loaders */
