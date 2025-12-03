@@ -373,6 +373,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .to-red-600 { --tw-gradient-to: #dc2626; }
 .hover\:from-red-600:hover { --tw-gradient-from: #dc2626; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(220, 38, 38, 0)); }
 .hover\:to-red-700:hover { --tw-gradient-to: #b91c1c; }
+.from-warning { --tw-gradient-from: var(--color-warning); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(245, 158, 11, 0)); }
+.to-orange-600 { --tw-gradient-to: #ea580c; }
+.hover\:from-orange-600:hover { --tw-gradient-from: #ea580c; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(234, 88, 12, 0)); }
+.hover\:to-orange-700:hover { --tw-gradient-to: #c2410c; }
 
 .shadow-lg { box-shadow: var(--shadow-lg); }
 .hover\:shadow-xl:hover { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
@@ -463,6 +467,16 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes zoomIn { from { transform: scale(0.95); } to { transform: scale(1); } }
+@keyframes fadeInZoom { 
+  from { 
+    opacity: 0; 
+    transform: scale(0.98) translateY(-8px); 
+  } 
+  to { 
+    opacity: 1; 
+    transform: scale(1) translateY(0); 
+  } 
+}
 @keyframes slideInFromTop { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .slide-in-from-top { animation-name: slideInFromTop; }
 

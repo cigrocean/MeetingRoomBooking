@@ -1,7 +1,11 @@
 import React, { useEffect } from "react";
 import { CheckCircle, XCircle, X } from "lucide-react";
+import { useLanguage } from "../hooks/useLanguage";
+import { getTranslation } from "../utils/translations";
 
 const Toast = ({ type, message, onClose, duration = 5000 }) => {
+  const { language } = useLanguage();
+  const t = (key, params) => getTranslation(key, language, params);
   const isSuccess = type === "success";
   const Icon = isSuccess ? CheckCircle : XCircle;
   const borderColor = isSuccess ? "border-success" : "border-danger";
@@ -26,7 +30,7 @@ const Toast = ({ type, message, onClose, duration = 5000 }) => {
         <button
           onClick={onClose}
           className="text-white/70 hover:text-white transition-colors flex-shrink-0"
-          title="Dismiss"
+          title={t('close')}
         >
           <X size={16} />
         </button>
