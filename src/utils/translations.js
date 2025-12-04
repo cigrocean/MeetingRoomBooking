@@ -132,6 +132,9 @@ export const translations = {
     cannotUpdateFixedScheduleConflictFixed: "Cannot update fixed schedule: conflicts with existing fixed schedule ({staff}) from {startTime} to {endTime}",
     fixedScheduleUpdatedSuccessfully: "Fixed schedule updated successfully",
     fixedScheduleCreatedSuccessfully: "Fixed schedule created successfully",
+    viewAllFixedSchedules: "View All Fixed Schedules",
+    manageAllFixedSchedules: "Manage all fixed schedules",
+    back: "Back",
   },
   ko: {
     // Dashboard
@@ -269,6 +272,9 @@ export const translations = {
     cannotUpdateFixedScheduleConflictFixed: "고정 일정을 업데이트할 수 없습니다: 기존 고정 일정 ({staff}, {startTime} ~ {endTime})과 충돌합니다",
     fixedScheduleUpdatedSuccessfully: "고정 일정이 성공적으로 업데이트되었습니다",
     fixedScheduleCreatedSuccessfully: "고정 일정이 성공적으로 생성되었습니다",
+    viewAllFixedSchedules: "모든 고정 일정 보기",
+    manageAllFixedSchedules: "모든 고정 일정 관리",
+    back: "뒤로",
   },
 };
 

@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { X, Loader2, RotateCcw, Edit2, Trash2, Clock, RefreshCw } from "lucide-react";
-import { fetchFixedSchedules, createFixedSchedule, updateFixedSchedule, deleteFixedSchedule, fetchAvailableTimeSlots } from "../services/googleSheets";
+import { useNavigate } from "react-router-dom";
+import { X, Loader2, RotateCcw } from "lucide-react";
+import { createFixedSchedule, updateFixedSchedule, fetchAvailableTimeSlots } from "../services/googleSheets";
 import { fetchRooms } from "../services/googleSheets";
 import { getTranslation } from "../utils/translations";
 
-const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
+const FixedScheduleModal = ({ onClose, onSuccess, editingSchedule = null, language = "en" }) => {
   const t = (key, params) => getTranslation(key, language, params);
-  const [schedules, setSchedules] = useState([]);
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [editingSchedule, setEditingSchedule] = useState(null);
   const [formData, setFormData] = useState({
     staff_name: "",
     room_id: "",
@@ -22,31 +22,36 @@ const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
 
   useEffect(() => {
     loadData();
-  }, []);
+    // If editingSchedule is provided, populate form
+    if (editingSchedule) {
+      setFormData({
+        staff_name: editingSchedule.staff_name || "",
+        room_id: editingSchedule.room_id || "",
+        start_time: editingSchedule.start_time || "",
+        end_time: editingSchedule.end_time || "",
+      });
+    }
+  }, [editingSchedule]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError(""); // Clear previous errors
-      const [schedulesData, roomsData, slotsData] = await Promise.all([
-        fetchFixedSchedules(),
+      const [roomsData, slotsData] = await Promise.all([
         fetchRooms(),
         fetchAvailableTimeSlots(),
       ]);
-      // Update all state together to prevent flashing
-      setSchedules(schedulesData);
       setRooms(roomsData);
       setTimeSlots(slotsData);
     } catch (error) {
-      console.error("Failed to load fixed schedules", error);
+      console.error("Failed to load data", error);
       setError(error.message || t('failedToLoadSchedules'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreate = () => {
-    setEditingSchedule(null);
+  const handleReset = () => {
     setFormData({
       staff_name: "",
       room_id: "",
@@ -54,37 +59,6 @@ const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
       end_time: "",
     });
     setError("");
-  };
-
-  const handleEdit = (schedule) => {
-    // For fixed schedules, we need to get a unique one by row
-    // Since multiple schedules can have same row (one per day), we'll use the first one
-    setEditingSchedule(schedule);
-    setFormData({
-      staff_name: schedule.staff_name || "",
-      room_id: schedule.room_id || "",
-      start_time: schedule.start_time || "",
-      end_time: schedule.end_time || "",
-    });
-    setError("");
-  };
-
-  const handleDelete = async (scheduleId) => {
-    if (!confirm(t('confirmDeleteSchedule'))) {
-      return;
-    }
-
-    try {
-      setSaving(true);
-      await deleteFixedSchedule(scheduleId);
-      await loadData();
-      if (onSuccess) onSuccess();
-    } catch (error) {
-      console.error("Failed to delete fixed schedule", error);
-      setError(error.message || t('failedToDeleteSchedule'));
-    } finally {
-      setSaving(false);
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -131,8 +105,6 @@ const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
       } else {
         await createFixedSchedule(formData);
       }
-      await loadData();
-      setEditingSchedule(null);
       setFormData({
         staff_name: "",
         room_id: "",
@@ -191,31 +163,21 @@ const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
     }
   };
 
-  // Group schedules by row (since one row can have multiple day schedules)
-  const groupedSchedules = schedules.reduce((acc, schedule) => {
-    const rowKey = schedule.row || "unknown";
-    if (!acc[rowKey]) {
-      acc[rowKey] = [];
-    }
-    acc[rowKey].push(schedule);
-    return acc;
-  }, {});
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm" style={{ animation: 'fadeIn 0.15s ease-out' }}>
-      <div className="bg-surface w-full max-w-4xl rounded-lg shadow-lg border border-slate-700 max-h-[95vh] h-[95vh] flex flex-col" style={{ animation: 'fadeInZoom 0.2s ease-out' }}>
+      <div className="bg-surface w-full max-w-md rounded-lg shadow-lg border border-slate-700 max-h-[90vh] overflow-y-auto" style={{ animation: 'fadeInZoom 0.2s ease-out' }}>
         {/* Fixed Header */}
         <div
-          className="flex justify-between items-center border-b border-slate-700 flex-shrink-0"
+          className="flex justify-between items-center border-b border-slate-700"
           style={{
-            paddingLeft: "1.5rem",
-            paddingRight: "1.5rem",
-            paddingTop: "1.5rem",
-            paddingBottom: "1.5rem",
+            paddingLeft: "1rem",
+            paddingRight: "1rem",
+            paddingTop: "1rem",
+            paddingBottom: "1rem",
           }}
         >
-          <h2 className="text-lg sm:text-xl font-bold text-white">
-            {t('manageFixedSchedules')}
+          <h2 className="text-lg font-bold text-white">
+            {editingSchedule ? t('editFixedSchedule') : t('createNewFixedSchedule')}
           </h2>
           <button
             onClick={onClose}
@@ -231,31 +193,30 @@ const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
           </button>
         </div>
 
-        {/* Fixed Form Section */}
+        {/* Form Section */}
         <div
-          className="flex flex-col gap-4 flex-shrink-0"
           style={{
-            paddingLeft: "1.5rem",
-            paddingRight: "1.5rem",
-            paddingTop: "1.5rem",
-            paddingBottom: "1.5rem",
+            paddingLeft: "1rem",
+            paddingRight: "1rem",
+            paddingTop: "1rem",
+            paddingBottom: "1rem",
           }}
         >
           {error && (
-            <div className="bg-danger/20 border border-danger text-danger px-3 py-2 rounded-lg text-sm">
+            <div className="bg-danger/20 border border-danger text-danger px-3 py-2 rounded-lg text-sm mb-4">
               {error}
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4 bg-surface-hover rounded-lg border border-slate-700">
-            <h3 className="text-md font-semibold text-white">
-              {editingSchedule ? t('editFixedSchedule') : t('createNewFixedSchedule')}
-            </h3>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5 sm:gap-6">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-5 sm:gap-6">
               <div>
-                <label className="block text-sm font-medium text-muted mb-2">
+                <label
+                  className="block text-sm font-medium text-muted"
+                  style={{ marginBottom: "0.75rem", display: "block" }}
+                >
                   {t('staffName')} <span className="text-danger">*</span>
                 </label>
                 <input
@@ -270,7 +231,10 @@ const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted mb-2">
+                <label
+                  className="block text-sm font-medium text-muted"
+                  style={{ marginBottom: "0.75rem", display: "block" }}
+                >
                   {t('room')} <span className="text-danger">*</span>
                 </label>
                 <select
@@ -290,7 +254,10 @@ const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted mb-2">
+                <label
+                  className="block text-sm font-medium text-muted"
+                  style={{ marginBottom: "0.75rem", display: "block" }}
+                >
                   {t('startTime')} <span className="text-danger">*</span>
                 </label>
                 <select
@@ -310,7 +277,10 @@ const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted mb-2">
+                <label
+                  className="block text-sm font-medium text-muted"
+                  style={{ marginBottom: "0.75rem", display: "block" }}
+                >
                   {t('endTime')} <span className="text-danger">*</span>
                 </label>
                 <select
@@ -332,11 +302,11 @@ const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-4">
               <button
                 type="submit"
-                disabled={saving}
-                className="flex-1 bg-gradient-to-r from-primary to-blue-600 hover:from-primary-hover hover:to-blue-700 text-white-fixed py-2.5 rounded-lg font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                disabled={saving || loading}
+                className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary-hover hover:to-blue-700 text-white-fixed py-3 rounded-lg font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 text-base"
               >
                 {saving ? (
                   <>
@@ -349,112 +319,50 @@ const FixedScheduleModal = ({ onClose, onSuccess, language = "en" }) => {
                   t('createSchedule')
                 )}
               </button>
-              {editingSchedule && (
+              <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => {
-                    setEditingSchedule(null);
-                    setFormData({
-                      staff_name: "",
-                      room_id: "",
-                      start_time: "",
-                      end_time: "",
-                    });
-                    setError("");
-                  }}
-                  disabled={saving}
-                  className="px-4 bg-surface-alt border border-slate-700 hover:bg-surface-hover text-white py-2.5 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {t('cancel')}
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
-
-        {/* Scrollable Fixed Schedules List */}
-        <div
-          className="flex-1 overflow-y-auto min-h-0"
-          style={{
-            paddingLeft: "1.5rem",
-            paddingRight: "1.5rem",
-            paddingBottom: "1.5rem",
-          }}
-        >
-          <div className="flex justify-between items-center mb-4 flex-wrap gap-2 pt-4">
-            <h3 className="text-md font-semibold text-white">{t('fixedSchedules')}</h3>
-            {!editingSchedule && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCreate}
+                  onClick={handleReset}
                   disabled={saving || loading}
-                  className="flex items-center gap-2 px-4 py-2 bg-surface-alt hover:bg-surface-hover border border-slate-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-surface-alt hover:bg-surface-hover border border-slate-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
                   title={t('resetForm')}
                 >
-                  <RotateCcw size={16} />
-                  {t('reset')}
+                  <RotateCcw size={18} />
+                  <span>{t('reset')}</span>
                 </button>
-                <button
-                  onClick={loadData}
-                  disabled={saving || loading}
-                  className="flex items-center gap-2 px-4 py-2 bg-surface-alt hover:bg-surface-hover border border-slate-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={t('refreshSchedules')}
-                >
-                  <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-                  {t('refresh')}
-                </button>
+                {editingSchedule && (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    disabled={saving}
+                    className="flex-1 px-4 py-2 bg-surface-alt border border-slate-700 hover:bg-surface-hover text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed text-base"
+                  >
+                    {t('cancel')}
+                  </button>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          </form>
 
-          {loading ? (
-            <div className="text-center py-8 text-muted">{t('loading')}</div>
-          ) : Object.keys(groupedSchedules).length === 0 ? (
-            <div className="text-center py-8 text-muted">{t('noFixedSchedulesFound')}</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
-              {Object.entries(groupedSchedules).map(([row, rowSchedules]) => (
-                <div key={row} className="p-4 bg-surface-hover rounded-lg border border-slate-700 flex flex-col">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-muted">{t('row')} {row}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(rowSchedules[0])}
-                        disabled={saving}
-                        className="p-2 bg-surface-alt hover:bg-primary/20 border border-slate-700 rounded-lg transition-colors disabled:opacity-50"
-                        title={t('edit')}
-                      >
-                        <Edit2 size={16} className="text-white" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(rowSchedules[0].id)}
-                        disabled={saving}
-                        className="p-2 bg-surface-alt hover:bg-danger/20 border border-slate-700 rounded-lg transition-colors disabled:opacity-50"
-                        title={t('delete')}
-                      >
-                        <Trash2 size={16} className="text-danger" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="space-y-2 flex-1">
-                    <div className="text-white font-medium">{rowSchedules[0].staff_name}</div>
-                    <div className="text-sm text-muted">
-                      {rooms.find((r) => r.id === rowSchedules[0].room_id)?.name || rowSchedules[0].room_id}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted">
-                      <Clock size={14} />
-                      <span>
-                        {rowSchedules[0].start_time} - {rowSchedules[0].end_time}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted">
-                      {t('appliesTo')} {rowSchedules.map((s) => s.dayName || `${t('day')} ${s.dayOfWeek}`).join(", ")}
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {/* Button to view all schedules */}
+          {!editingSchedule && (
+            <div 
+              style={{
+                marginTop: "2rem",
+                paddingTop: "1.5rem",
+                borderTop: "1px solid rgb(51 65 85)",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  navigate('/fixed-schedules');
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-surface-alt hover:bg-surface-hover border border-slate-700 text-white rounded-lg font-medium transition-colors text-base"
+              >
+                <span>{t('viewAllFixedSchedules') || 'View All Fixed Schedules'}</span>
+              </button>
             </div>
           )}
         </div>

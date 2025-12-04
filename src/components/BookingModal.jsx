@@ -335,7 +335,7 @@ const BookingModal = ({
               className="block text-sm font-medium text-muted"
               style={{ marginBottom: "0.75rem", display: "block" }}
             >
-              {t("meetingTitle")}
+              {t("meetingTitle")} <span className="text-danger">*</span>
             </label>
             <input
               type="text"
@@ -355,7 +355,7 @@ const BookingModal = ({
             >
               <div className="flex items-center gap-2">
                 <Calendar size={16} className="text-muted" />
-                <span>{t("selectDate")}</span>
+                <span>{t("selectDate")} <span className="text-danger">*</span></span>
               </div>
             </label>
             <DatePicker
@@ -375,7 +375,7 @@ const BookingModal = ({
                 className="block text-sm font-medium text-muted"
                 style={{ marginBottom: "0.75rem", display: "block" }}
               >
-                {t("startTime")}
+                {t("startTime")} <span className="text-danger">*</span>
               </label>
               <select
                 required
@@ -414,7 +414,7 @@ const BookingModal = ({
                 className="block text-sm font-medium text-muted"
                 style={{ marginBottom: "0.75rem", display: "block" }}
               >
-                {t("endTime")}
+                {t("endTime")} <span className="text-danger">*</span>
               </label>
               <select
                 required

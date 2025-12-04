@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchRooms, fetchBookings, getRoomStatus, createBooking, fetchAvailableTimeSlots, getSheetUrl, fetchFixedSchedules } from '../services/googleSheets';
 import RoomCard from './RoomCard';
 import SkeletonRoomCard from './SkeletonRoomCard';
@@ -11,6 +12,7 @@ import { getTranslation } from '../utils/translations';
 
 const Dashboard = () => {
   const { language, toggleLanguage } = useLanguage();
+  const navigate = useNavigate();
   const t = (key, params) => getTranslation(key, language, params);
   
   const [rooms, setRooms] = useState([]);
@@ -274,7 +276,7 @@ const Dashboard = () => {
           <span>{t('viewSheet')}</span>
         </a>
         <button
-          onClick={() => setShowFixedScheduleModal(true)}
+          onClick={() => navigate('/fixed-schedules')}
           className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-warning to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white-fixed font-medium shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 text-sm no-underline"
           style={{ textDecoration: 'none', paddingLeft: '0.75rem', paddingRight: '0.75rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', display: 'inline-flex' }}
         >
@@ -282,6 +284,16 @@ const Dashboard = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <span>{t('manageFixedSchedules')}</span>
+        </button>
+        <button
+          onClick={() => setShowFixedScheduleModal(true)}
+          className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-primary to-blue-600 hover:from-primary-hover hover:to-blue-700 text-white-fixed font-medium shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 text-sm no-underline"
+          style={{ textDecoration: 'none', paddingLeft: '0.75rem', paddingRight: '0.75rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', display: 'inline-flex' }}
+        >
+          <svg style={{ width: '0.875rem', height: '0.875rem', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <span>{t('createNewFixedSchedule')}</span>
         </button>
       </div>
 
@@ -337,7 +349,7 @@ const Dashboard = () => {
             loadData(); // Reload fixed schedules
             setToast({
               type: "success",
-              message: t('fixedScheduleUpdatedSuccessfully'),
+              message: t('fixedScheduleCreatedSuccessfully'),
             });
           }}
           language={language}
