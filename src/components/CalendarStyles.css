@@ -1,0 +1,170 @@
+/* Global Box Sizing Fix */
+.rbc-calendar *, .rbc-calendar *:before, .rbc-calendar *:after { box-sizing: border-box; }
+
+/* Calendar Font */
+.rbc-calendar { font-family: inherit; color: var(--color-text-muted); }
+
+/* --- MAIN CONTAINER --- */
+.rbc-time-view {
+  border: 1px solid var(--color-border) !important; /* Restore inner grid border */
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.3); /* Light mode default */
+  overflow: hidden; /* Clips corner content */
+  
+  /* DRAW FOOTER LINE FOR HEADER across entire width (covers scrollbar gap) */
+  /* Line is at 50px from top (height of header) */
+  background-image: none !important; /* Remove header separator line */
+}
+
+@media (prefers-color-scheme: dark) {
+  .rbc-time-view {
+    background-color: rgba(15, 23, 42, 0.3);
+  }
+}
+
+/* --- RESET ALL INTERNAL BORDERS --- */
+.rbc-time-header, .rbc-time-content, .rbc-time-header-content,
+.rbc-header, .rbc-timeslot-group, .rbc-time-gutter,
+.rbc-day-bg, .rbc-day-slot, .rbc-time-slot,
+.rbc-time-header-gutter, .rbc-day-bg + .rbc-day-bg,
+.rbc-header + .rbc-header {
+  border: none !important;
+}
+
+/* --- HORIZONTAL LINES (Rows) --- */
+.rbc-timeslot-group {
+  box-shadow: inset 0 -1px 0 0 rgba(148, 163, 184, 0.15) !important;
+  min-height: 60px;
+}
+/* REMOVE BOTTOM SHADOW ON LAST ROW TO PREVENT DOUBLE BORDER WITH CONTAINER */
+.rbc-timeslot-group:last-child {
+  box-shadow: none !important;
+}
+
+.rbc-time-header {
+  /* Header Bottom Line - Matches inner grid */
+  box-shadow: 0 1px 0 0 rgba(148, 163, 184, 0.15) !important; 
+  z-index: 20;
+  background-color: transparent !important; /* Transparent to match glass effect */
+}
+
+/* --- VERTICAL LINES (Columns) --- */
+/* Divider between Time Axis and Content */
+.rbc-time-gutter {
+  /* Gutter Right Line - Matches inner grid */
+  box-shadow: 1px 0 0 0 rgba(148, 163, 184, 0.15) !important;
+  z-index: 10;
+  background-color: transparent; /* Transparent to match glass effect */
+  text-align: center; /* Center time labels horizontally */
+}
+.rbc-time-gutter .rbc-timeslot-group {
+  align-items: center; /* Center vertically if flex */
+  justify-content: center; /* Center horizontally if flex */
+  display: flex;
+}
+.rbc-label {
+    width: 100%;
+    text-align: center;
+}
+
+/* TOP LEFT CORNER FIX */
+.rbc-time-header-gutter {
+  background-color: transparent !important; /* Transparent to match glass effect */
+  border: none !important;
+  /* Match Gutter Right Line */
+  box-shadow: 1px 0 0 0 rgba(148, 163, 184, 0.15) !important; 
+  z-index: 10;
+}
+
+/* Divider between Resource Columns (Header) */
+.rbc-header + .rbc-header {
+  box-shadow: -1px 0 0 0 rgba(148, 163, 184, 0.15) !important;
+}
+
+/* Divider between Resource Columns (Body) */
+.rbc-day-bg + .rbc-day-bg {
+  box-shadow: -1px 0 0 0 rgba(148, 163, 184, 0.15) !important;
+}
+
+/* --- MINOR LINES (30min) --- */
+.rbc-day-slot .rbc-time-slot {
+  /* Minor lines - slightly lighter but same width logic */
+  box-shadow: inset 0 1px 0 0 rgba(148, 163, 184, 0.15) !important;
+}
+/* Ensure the top slot doesn't double border with header (though sub-slot is fine usually) */
+.rbc-day-slot .rbc-time-slot:first-child {
+  box-shadow: none !important;
+}
+
+/* --- HEADER TEXT --- */
+.rbc-header {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--color-text);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+/* --- EVENTS (Full Width) --- */
+.rbc-event {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  border-radius: 4px;
+}
+.rbc-event-content { font-size: 0.85rem; font-weight: 600; }
+.rbc-event-label { display: none !important; }
+
+/* --- CURRENT TIME --- */
+.rbc-current-time-indicator { background-color: var(--color-danger); }
+
+/* --- SCROLLBAR --- */
+.rbc-time-content::-webkit-scrollbar { width: 8px; height: 8px; }
+.rbc-time-content::-webkit-scrollbar-track { background: transparent; }
+.rbc-time-content::-webkit-scrollbar-thumb { background-color: var(--color-border); border-radius: 4px; }
+.rbc-time-content::-webkit-scrollbar-thumb:hover { background-color: var(--color-text-muted); }
+
+/* --- TODAY HIGHLIGHT --- */
+/* --- TODAY HIGHLIGHT --- */
+.rbc-day-slot.rbc-today { background-color: var(--color-surface-hover); }
+
+/* --- DARK MODE FIXES --- */
+/* Force transparency on all container elements to let glassmorphism show */
+.rbc-time-header,
+.rbc-time-content,
+.rbc-time-gutter,
+.rbc-header,
+.rbc-day-bg,
+.rbc-day-slot,
+.rbc-time-slot,
+.rbc-time-header-content,
+.rbc-time-header-gutter {
+  background-color: transparent !important;
+}
+
+/* Hide All-Day Row (The white bar below header) */
+.rbc-allday-cell {
+  display: none !important;
+}
+
+/* Ensure text is visible in dark mode */
+.rbc-time-gutter .rbc-timeslot-group,
+.rbc-header {
+  color: var(--color-text-muted);
+}
+
+/* Fix for the white time gutter background specifically */
+.rbc-time-view .rbc-time-gutter {
+  background: transparent !important;
+}
+
+

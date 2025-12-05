@@ -3,6 +3,7 @@ export const translations = {
     // Dashboard
     pageTitle: "Cigro Meeting Rooms Booking",
     meetingRooms: "Cigro Meeting Rooms Booking",
+    roomSchedule: "Daily Room Schedule",
     realTimeStatus: "Real-time availability status",
     updated: "Updated",
     refresh: "Refresh",
@@ -140,6 +141,7 @@ export const translations = {
     // Dashboard
     pageTitle: "Cigro 회의실 예약",
     meetingRooms: "Cigro 회의실 예약",
+    roomSchedule: "일별 회의실 일정",
     realTimeStatus: "실시간 예약 현황",
     updated: "업데이트",
     refresh: "새로고침",

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchRooms, fetchBookings, getRoomStatus, createBooking, fetchAvailableTimeSlots, getSheetUrl, fetchFixedSchedules } from '../services/googleSheets';
 import RoomCard from './RoomCard';
+import LibraryRoomCalendar from './LibraryRoomCalendar';
 import SkeletonRoomCard from './SkeletonRoomCard';
+
+import { fetchRooms, fetchBookings, getRoomStatus, createBooking, fetchAvailableTimeSlots, getSheetUrl, fetchFixedSchedules, CACHE_KEYS, getFromCache } from '../services/googleSheets';
 import BookingModal from './BookingModal';
 import FixedScheduleModal from './FixedScheduleModal';
 import AlertDialog from './AlertDialog';
@@ -28,7 +30,24 @@ const Dashboard = () => {
   const [sheetUrl, setSheetUrl] = useState('#');
 
   const loadData = async () => {
+    // 1. Try to load from cache first for instant UI
+    const cachedRooms = getFromCache(CACHE_KEYS.ROOMS);
+    const cachedBookings = getFromCache(CACHE_KEYS.BOOKINGS);
+    const cachedSlots = getFromCache(CACHE_KEYS.TIME_SLOTS);
+    const cachedFixedSchedules = getFromCache(CACHE_KEYS.FIXED_SCHEDULES);
+
+    if (cachedRooms) setRooms(cachedRooms);
+    if (cachedBookings) setBookings(cachedBookings);
+    if (cachedSlots) setTimeSlots(cachedSlots);
+    if (cachedFixedSchedules) setFixedSchedules(cachedFixedSchedules);
+
+    // If we have at least rooms and bookings, we can show the UI immediately
+    if (cachedRooms && cachedBookings) {
+      setLoading(false);
+    }
+
     try {
+      // 2. Fetch fresh data in background
       const [roomsData, bookingsData, slotsData, fixedSchedulesData] = await Promise.all([
         fetchRooms(),
         fetchBookings(),
@@ -297,7 +316,19 @@ const Dashboard = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex w-full gap-0">
+        {/* Spacer to match Calendar Time Gutter */}
+        <div className="w-[60px] flex-shrink-0 hidden md:block bg-transparent" />
+        
+        {/* Room Cards Grid */}
+        <div className={`flex-1 grid grid-cols-1 sm:grid-cols-2 ${!loading && rooms.length === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-6`}>
+        {/* Room Schedule Calendar - Full Width in Grid */}
+        {!loading && rooms.length > 0 && (
+          <div className="w-full mb-6" style={{ gridColumn: '1 / -1' }}>
+            <LibraryRoomCalendar rooms={rooms} bookings={bookings} />
+          </div>
+        )}
+
         {loading ? (
           [1, 2, 3].map(i => <SkeletonRoomCard key={i} />)
         ) : (
@@ -328,6 +359,7 @@ const Dashboard = () => {
             );
           })
         )}
+      </div>
       </div>
 
       {selectedRoom && (

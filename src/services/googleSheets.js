@@ -8,6 +8,38 @@ import {
   format,
 } from "date-fns";
 
+// Cache Keys
+export const CACHE_KEYS = {
+  ROOMS: 'mrb_rooms',
+  BOOKINGS: 'mrb_bookings',
+  TIME_SLOTS: 'mrb_time_slots',
+  FIXED_SCHEDULES: 'mrb_fixed_schedules'
+};
+
+// Cache Helpers
+export const saveToCache = (key, data) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      timestamp: Date.now(),
+      data
+    }));
+  } catch (e) {
+    console.warn('Failed to save to cache', e);
+  }
+};
+
+export const getFromCache = (key) => {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return null;
+    const parsed = JSON.parse(item);
+    return parsed.data;
+  } catch (e) {
+    console.warn('Failed to get from cache', e);
+    return null;
+  }
+};
+
 // Get SHEET_ID from .env - REQUIRED
 const getSheetId = () => {
   const envSheetId = import.meta.env.VITE_GOOGLE_SHEET_ID;
@@ -366,6 +398,7 @@ const ROOMS = [
 ];
 
 export const fetchRooms = async () => {
+  saveToCache(CACHE_KEYS.ROOMS, ROOMS);
   return ROOMS;
 };
 
@@ -624,6 +657,7 @@ export const fetchBookings = async () => {
             );
           }
 
+          saveToCache(CACHE_KEYS.BOOKINGS, bookings);
           resolve(bookings);
         },
         error: (err) => {
@@ -1549,6 +1583,7 @@ export const fetchAvailableTimeSlots = async () => {
       timeSlots.push(timeStr);
     }
   }
+  saveToCache(CACHE_KEYS.TIME_SLOTS, timeSlots);
   return timeSlots;
 };
 
@@ -1787,6 +1822,7 @@ export const fetchFixedSchedules = async () => {
         `✅ Found ${fixedSchedules.length} fixed schedules:`,
         fixedSchedules
       );
+      saveToCache(CACHE_KEYS.FIXED_SCHEDULES, fixedSchedules);
       return fixedSchedules;
     }
 
@@ -2292,6 +2328,7 @@ export const fetchFixedSchedules = async () => {
             `✅ Found ${fixedSchedules.length} fixed schedules:`,
             fixedSchedules
           );
+          saveToCache(CACHE_KEYS.FIXED_SCHEDULES, fixedSchedules);
           resolve(fixedSchedules);
         },
         error: (err) => {
