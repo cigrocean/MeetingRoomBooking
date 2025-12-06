@@ -105,6 +105,7 @@
 }
 
 /* --- EVENTS (Full Width) --- */
+/* --- EVENTS (Full Width) --- */
 .rbc-event {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: none !important;
@@ -115,7 +116,21 @@
   margin: 0 !important;
   padding: 4px 8px !important;
   border-radius: 4px;
+  /* Allow content to determine height within reason */
+  overflow: hidden; /* Default clipped */
+  transition: all 0.2s ease-in-out;
 }
+
+/* EXPAND ON HOVER: The "Never Clipped" Fix */
+.rbc-event:hover {
+  z-index: 100 !important;
+  height: auto !important;
+  min-height: 100% !important;
+  overflow: visible !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+  /* Optional: slightly wider if needed, but height is key */
+}
+
 .rbc-event-content { font-size: 0.85rem; font-weight: 600; }
 .rbc-event-label { display: none !important; }
 

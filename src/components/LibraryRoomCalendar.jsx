@@ -44,11 +44,11 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
 
     return (
       <div 
-        className={`h-full flex ${isShort ? 'flex-row items-center gap-2' : 'flex-col justify-center'} px-1 overflow-hidden`} 
+        className={`h-full flex ${isShort ? 'flex-row items-center gap-2' : 'flex-col justify-center'} px-1`} 
         title={`${event.desc} (${start.format('HH:mm')} - ${end.format('HH:mm')})`}
       >
-        <div className="text-xs font-semibold truncate">{event.desc}</div>
-        <div className={`text-[10px] opacity-75 truncate ${isShort ? 'flex-shrink-0' : ''}`}>
+        <div className="text-xs font-semibold break-words leading-tight">{event.desc}</div>
+        <div className={`text-[10px] opacity-75 flex-shrink-0 ${isShort ? '' : ''}`}>
           {start.format('HH:mm')} - {end.format('HH:mm')}
         </div>
       </div>
@@ -85,7 +85,8 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
         maxWidth: '100%',
         position: 'absolute', // Ensure it respects the slot
         left: 0,
-        right: 0
+        right: 0,
+        // Allow height to grow on hover (handled by CSS class mostly, but style overrides help)
       }
     };
   };
@@ -104,29 +105,31 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
         </h2>
       </div>
       
-      <div className="h-[600px] relative" style={{ color: 'var(--color-text)' }}>
-        <Calendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          defaultView={Views.DAY}
-          views={[Views.DAY]}
-          step={30}
-          timeslots={2}
-          min={new Date(0, 0, 0, 7, 0, 0)} // 7 AM
-          max={new Date(0, 0, 0, 19, 0, 0)} // 7 PM
-          resources={resources}
-          resourceIdAccessor="id"
-          resourceTitleAccessor="title"
-          toolbar={false} /* Hide default toolbar for cleaner look */
-          date={new Date()} /* Force today since we removed nav buttons */
-          components={{
-            event: EventComponent
-          }}
-          eventPropGetter={eventPropGetter}
-          dayLayoutAlgorithm="no-overlap"
-        />
+      <div className="overflow-x-auto w-full">
+        <div className="h-[600px] min-w-[800px] relative" style={{ color: 'var(--color-text)' }}>
+          <Calendar
+            localizer={localizer}
+            events={events}
+            startAccessor="start"
+            endAccessor="end"
+            defaultView={Views.DAY}
+            views={[Views.DAY]}
+            step={30}
+            timeslots={2}
+            min={new Date(0, 0, 0, 7, 0, 0)} // 7 AM
+            max={new Date(0, 0, 0, 19, 0, 0)} // 7 PM
+            resources={resources}
+            resourceIdAccessor="id"
+            resourceTitleAccessor="title"
+            toolbar={false} /* Hide default toolbar for cleaner look */
+            date={new Date()} /* Force today since we removed nav buttons */
+            components={{
+              event: EventComponent
+            }}
+            eventPropGetter={eventPropGetter}
+            dayLayoutAlgorithm="no-overlap"
+          />
+        </div>
       </div>
     </div>
   );
