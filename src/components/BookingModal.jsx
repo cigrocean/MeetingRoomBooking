@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Calendar, Clock, Loader2 } from "lucide-react";
+import { X, Calendar, Clock, Loader2, Info } from "lucide-react";
 import {
   format,
   parse,
@@ -76,8 +76,9 @@ const BookingModal = ({
     return timeSlots.filter((time) => {
       const [hours, minutes] = time.split(":").map(Number);
       const timeMinutes = hours * 60 + minutes;
-      // Only show times that are at least 5 minutes in the future (buffer for booking)
-      return timeMinutes > currentTimeMinutes + 5;
+      // Only show times that are not more than 5 minutes in the past
+      // providing a 5-minute grace period for "late" bookings
+      return timeMinutes > currentTimeMinutes - 5;
     });
   };
 
@@ -104,9 +105,9 @@ const BookingModal = ({
       const startTimeMinutes = hours * 60 + minutes;
       const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
 
-      // If selected start time is in the past, reset to first available
+      // If selected start time is now invalid (more than 5 mins in past), reset to first available
       if (
-        startTimeMinutes <= currentTimeMinutes + 5 &&
+        startTimeMinutes <= currentTimeMinutes - 5 &&
         availableTimeSlots.length > 0
       ) {
         setStartTime(availableTimeSlots[0]);
@@ -324,6 +325,14 @@ const BookingModal = ({
             paddingBottom: "1rem",
           }}
         >
+          {/* Grace Period Note */}
+          <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 flex items-start gap-3">
+             <Info className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
+             <p className="text-sm text-warning/90 leading-snug">
+               {t('gracePeriodNote')}
+             </p>
+          </div>
+
           {error && (
             <div className="bg-danger/20 border border-danger text-danger px-3 py-2 rounded-lg text-sm">
               {error}

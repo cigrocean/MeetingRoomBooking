@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Clock, RefreshCw, ArrowLeft } from "lucide-react";
-import { fetchFixedSchedules, deleteFixedSchedule } from "../services/googleSheets";
+import { fetchFixedSchedules, deleteFixedSchedule, CACHE_KEYS, getFromCache } from "../services/googleSheets";
 import { fetchRooms } from "../services/googleSheets";
 import { getTranslation } from "../utils/translations";
 import { useLanguage } from "../hooks/useLanguage";
@@ -24,11 +24,27 @@ const FixedSchedulesPage = () => {
 
   const loadData = async () => {
     try {
-      setLoading(true);
+      // 1. Try to load from cache first for instant feedback
+      const cachedSchedules = getFromCache(CACHE_KEYS.FIXED_SCHEDULES);
+      const cachedRooms = getFromCache(CACHE_KEYS.ROOMS);
+
+      if (cachedSchedules && cachedRooms) {
+        setSchedules(cachedSchedules);
+        setRooms(cachedRooms);
+        setLoading(false); // Show cached content immediately
+      }
+
+      // 2. Fetch fresh data in the background
+      // If we didn't have cached data, ensure loading is true
+      if (!cachedSchedules || !cachedRooms) {
+        setLoading(true);
+      }
+
       const [schedulesData, roomsData] = await Promise.all([
         fetchFixedSchedules(),
         fetchRooms(),
       ]);
+      
       setSchedules(schedulesData);
       setRooms(roomsData);
     } catch (error) {

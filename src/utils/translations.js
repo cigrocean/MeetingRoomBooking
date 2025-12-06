@@ -7,6 +7,7 @@ export const translations = {
     realTimeStatus: "Real-time availability status",
     updated: "Updated",
     refresh: "Refresh",
+    onlineUsers: "{count} Online",
 
     // Room Card
     available: "Available",
@@ -136,6 +137,7 @@ export const translations = {
     viewAllFixedSchedules: "View All Fixed Schedules",
     manageAllFixedSchedules: "Manage all fixed schedules",
     back: "Back",
+    gracePeriodNote: "Note: You can proceed with booking if the time has passed by less than 5 minutes.",
   },
   ko: {
     // Dashboard
@@ -145,6 +147,7 @@ export const translations = {
     realTimeStatus: "실시간 예약 현황",
     updated: "업데이트",
     refresh: "새로고침",
+    onlineUsers: "{count}명 접속 중",
 
     // Room Card
     available: "사용 가능",
@@ -277,6 +280,7 @@ export const translations = {
     viewAllFixedSchedules: "모든 고정 일정 보기",
     manageAllFixedSchedules: "모든 고정 일정 관리",
     back: "뒤로",
+    gracePeriodNote: "참고: 시작 시간이 5분 이내로 지났다면 예약을 진행할 수 있습니다.",
   },
 };
 

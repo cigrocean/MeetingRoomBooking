@@ -11,6 +11,7 @@ import AlertDialog from './AlertDialog';
 import Toast from './Toast';
 import { useLanguage } from '../hooks/useLanguage';
 import { getTranslation } from '../utils/translations';
+import OnlineUsers from './OnlineUsers';
 
 const Dashboard = () => {
   const { language, toggleLanguage } = useLanguage();
@@ -251,7 +252,9 @@ const Dashboard = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 break-words">{t('meetingRooms')}</h1>
             <p className="text-sm sm:text-base text-muted">{t('realTimeStatus')}</p>
           </div>
-          <button
+          <div className="flex items-center gap-3">
+            <OnlineUsers />
+            <button
             onClick={toggleLanguage}
             className="px-2 sm:px-3 py-1 rounded-md bg-surface-hover hover:bg-primary/20 transition-all border border-slate-700 hover:border-primary text-xs sm:text-sm text-white whitespace-nowrap flex items-center gap-2 sm:gap-2.5 flex-shrink-0"
             title={t('language')}
@@ -262,6 +265,7 @@ const Dashboard = () => {
             <span>{language === 'en' ? '한국어' : 'English'}</span>
           </button>
         </div>
+      </div>
         <div className="flex items-center gap-2 sm:gap-4 w-full justify-between flex-wrap">
           <span className="text-xs sm:text-sm text-muted whitespace-nowrap">
             {t('updated')}: {lastUpdated.toLocaleTimeString()}

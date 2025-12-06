@@ -92,7 +92,7 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
 
   return (
     <div className="w-full bg-surface/50 backdrop-blur-md rounded-xl overflow-hidden shadow-xl">
-      <div className="p-4 flex justify-start items-center">
+      <div className="py-4 flex justify-start items-center">
         <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>

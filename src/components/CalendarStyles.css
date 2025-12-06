@@ -6,14 +6,15 @@
 
 /* --- MAIN CONTAINER --- */
 .rbc-time-view {
-  border: 1px solid var(--color-border) !important; /* Restore inner grid border */
+  border: 1px solid var(--color-border) !important; /* Restore outer border as requested */
+  /* Remove explicit border-left/right: none to allow the outer frame */
   border-radius: 0.5rem;
-  background-color: rgba(255, 255, 255, 0.3); /* Light mode default */
-  overflow: hidden; /* Clips corner content */
+  background-color: rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  gap: 0 !important; /* Ensure no gaps show background as lines */
   
   /* DRAW FOOTER LINE FOR HEADER across entire width (covers scrollbar gap) */
-  /* Line is at 50px from top (height of header) */
-  background-image: none !important; /* Remove header separator line */
+  background-image: none !important;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -33,7 +34,7 @@
 
 /* --- HORIZONTAL LINES (Rows) --- */
 .rbc-timeslot-group {
-  box-shadow: inset 0 -1px 0 0 rgba(148, 163, 184, 0.15) !important;
+  box-shadow: inset 0 -1px 0 0 rgba(148, 163, 184, 0.25) !important; /* Increased visibility (Hours) */
   min-height: 60px;
 }
 /* REMOVE BOTTOM SHADOW ON LAST ROW TO PREVENT DOUBLE BORDER WITH CONTAINER */
@@ -42,8 +43,8 @@
 }
 
 .rbc-time-header {
-  /* Header Bottom Line - Matches inner grid */
-  box-shadow: 0 1px 0 0 rgba(148, 163, 184, 0.15) !important; 
+  /* Remove Header Bottom Line */
+  box-shadow: none !important; 
   z-index: 20;
   background-color: transparent !important; /* Transparent to match glass effect */
 }
@@ -51,8 +52,8 @@
 /* --- VERTICAL LINES (Columns) --- */
 /* Divider between Time Axis and Content */
 .rbc-time-gutter {
-  /* Gutter Right Line - Matches inner grid */
-  box-shadow: 1px 0 0 0 rgba(148, 163, 184, 0.15) !important;
+  /* Remove Gutter Right Line */
+  box-shadow: none !important;
   z-index: 10;
   background-color: transparent; /* Transparent to match glass effect */
   text-align: center; /* Center time labels horizontally */
@@ -61,6 +62,7 @@
   align-items: center; /* Center vertically if flex */
   justify-content: center; /* Center horizontally if flex */
   display: flex;
+  box-shadow: none !important; /* Remove horizontal lines inside gutter to clean up left side */
 }
 .rbc-label {
     width: 100%;
@@ -71,25 +73,17 @@
 .rbc-time-header-gutter {
   background-color: transparent !important; /* Transparent to match glass effect */
   border: none !important;
-  /* Match Gutter Right Line */
-  box-shadow: 1px 0 0 0 rgba(148, 163, 184, 0.15) !important; 
+  /* Remove Corner Line */
+  box-shadow: none !important; 
   z-index: 10;
 }
 
-/* Divider between Resource Columns (Header) */
-.rbc-header + .rbc-header {
-  box-shadow: -1px 0 0 0 rgba(148, 163, 184, 0.15) !important;
-}
-
-/* Divider between Resource Columns (Body) */
-.rbc-day-bg + .rbc-day-bg {
-  box-shadow: -1px 0 0 0 rgba(148, 163, 184, 0.15) !important;
-}
+/* (Moved to end of file for specificity) */
 
 /* --- MINOR LINES (30min) --- */
 .rbc-day-slot .rbc-time-slot {
   /* Minor lines - slightly lighter but same width logic */
-  box-shadow: inset 0 1px 0 0 rgba(148, 163, 184, 0.15) !important;
+  box-shadow: inset 0 1px 0 0 rgba(148, 163, 184, 0.15) !important; /* Increased visibility (Half-hours) */
 }
 /* Ensure the top slot doesn't double border with header (though sub-slot is fine usually) */
 .rbc-day-slot .rbc-time-slot:first-child {
@@ -107,6 +101,7 @@
   text-transform: uppercase;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
+  border-bottom: 0 !important;
 }
 
 /* --- EVENTS (Full Width) --- */
@@ -141,14 +136,184 @@
 /* Force transparency on all container elements to let glassmorphism show */
 .rbc-time-header,
 .rbc-time-content,
-.rbc-time-gutter,
 .rbc-header,
 .rbc-day-bg,
 .rbc-day-slot,
 .rbc-time-slot,
-.rbc-time-header-content,
-.rbc-time-header-gutter {
+.rbc-time-header-content {
   background-color: transparent !important;
+  border: none !important; /* Global nuking of borders on these elements */
+}
+
+/* --- VISUAL SEPARATION FOR TIME COLUMN (Background Tint) --- */
+.rbc-time-gutter,
+.rbc-time-header-gutter {
+  background-color: rgba(0, 0, 0, 0.04) !important; /* Slightly distinct background */
+  border: none !important;
+  padding-right: 8px !important; /* Push text away from the grid */
+}
+
+@media (prefers-color-scheme: dark) {
+  .rbc-time-gutter,
+  .rbc-time-header-gutter {
+    background-color: rgba(255, 255, 255, 0.05) !important; /* Dark mode tint */
+  }
+}
+
+/* Specific Border Nuking for Axis Lines */
+.rbc-time-header-content {
+  border: none !important;
+  border-left: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  margin-left: 0 !important;
+}
+
+/* Fix: Only apply separator to subsequent headers, NOT the first one */
+.rbc-header + .rbc-header {
+  box-shadow: -1px 0 0 0 rgba(148, 163, 184, 0.1) !important; /* Reduced opacity */
+}
+.rbc-header {
+  border-bottom: none !important;
+}
+.rbc-header:first-child {
+  box-shadow: none !important;
+}
+
+.rbc-time-content {
+  border: none !important;
+  border-top: none !important;
+  border-left: none !important;
+  margin-top: 0 !important;
+  gap: 0 !important; /* Gap Seal */
+}
+
+/* Fix Horizontal Line: Remove top text/border from first timeslot group */
+.rbc-timeslot-group:first-child {
+  border-top: none !important;
+  box-shadow: inset 0 -1px 0 0 rgba(148, 163, 184, 0.1) !important; /* Keep bottom, kill top, reduced opacity */
+}
+
+/* Time Gutter Right Border */
+.rbc-time-gutter {
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+/* Header Gutter Right Border */
+.rbc-time-header-gutter {
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+/* If overflowing, RBC sometimes adds a border */
+.rbc-time-header.rbc-overflowing {
+  border-right: none !important;
+}
+
+/* --- EVENTS CONTAINER (The hidden culprit for vertical lines) --- */
+.rbc-events-container {
+  border: none !important;
+  border-left: none !important;
+  margin: 0 !important;
+}
+
+/* --- NUCLEAR AXIS REMOVAL --- */
+/* User identifies "bottom border of header" and "right border of left time section" */
+div.rbc-time-header,
+div.rbc-time-header-content,
+div.rbc-time-header * {
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+div.rbc-time-gutter,
+div.rbc-time-gutter * {
+  border-right: none !important;
+  box-shadow: none !important;
+  border-left: none !important;
+  background-color: transparent !important;
+}
+
+/* Ensure individual time slots in the gutter don't have borders */
+.rbc-time-gutter .rbc-timeslot-group {
+  border-right: none !important;
+  border-bottom: none !important; 
+  box-shadow: none !important;
+}
+
+/* Restore HALF-HOUR lines in time gutter using BACKGROUND GRADIENT (Nuclear Option) */
+/* This draws a 1px line exactly in the middle (50%) of the hour group */
+/* Restore HALF-HOUR lines in time gutter using BACKGROUND GRADIENT (Nuclear Option) */
+/* This draws a 1px line exactly in the middle (50%) of the hour group */
+.rbc-time-gutter .rbc-timeslot-group {
+  position: relative;
+  z-index: 1; /* Ensure it sits above background but below content if needed */
+  background: linear-gradient(
+    to bottom,
+    transparent calc(50% - 1px),
+    rgba(148, 163, 184, 0.12) calc(50% - 1px),
+    rgba(148, 163, 184, 0.12) 50%,
+    transparent 50%,
+    transparent calc(100% - 1px),
+    rgba(148, 163, 184, 0.25) calc(100% - 1px),
+    rgba(148, 163, 184, 0.25) 100%
+  ) !important;
+}
+
+/* Clear any conflicting borders on the slots themselves */
+.rbc-time-gutter .rbc-time-slot,
+.rbc-time-gutter .rbc-time-slot + .rbc-time-slot {
+  border-top: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important; /* Ensure slots don't cover the gradient */
+}
+
+
+/* Remove bottom shadow/border from the VERY LAST time group in gutter */
+/* MODIFY the gradient to KEEP the half-hour line (50%) but REMOVE the bottom hour line (100%) */
+.rbc-time-gutter .rbc-timeslot-group:last-of-type {
+  background: linear-gradient(
+    to bottom,
+    transparent calc(50% - 1px),
+    rgba(148, 163, 184, 0.12) calc(50% - 1px),
+    rgba(148, 163, 184, 0.12) 50%,
+    transparent 50%
+    /* No 100% line here, leaving the bottom cleaner */
+  ) !important;
+  box-shadow: none !important;
+  border-bottom: none !important;
+}
+
+/* Remove bottom shadow from the VERY LAST time group in the MAIN GRID */
+/* ONLY target the absolute last child to preserve 5PM and 6PM lines */
+/* Use last-of-type because rbc-events-container often comes after the slots */
+/* Adding nth-child(12) for robustness as we know there are 12 slots (7am-7pm) */
+.rbc-time-content .rbc-timeslot-group:last-of-type,
+.rbc-day-slot .rbc-timeslot-group:last-of-type,
+.rbc-day-slot .rbc-timeslot-group:nth-of-type(12) {
+  box-shadow: none !important;
+  border-bottom: none !important;
+}
+
+/* Specific targeted reinforcement */
+.rbc-time-view .rbc-time-header {
+  border-bottom: 0px none transparent !important;
+}
+.rbc-time-view .rbc-time-gutter {
+  border-right: 0px none transparent !important;
+}
+.rbc-time-view .rbc-time-header-gutter {
+  border-right: 0px none transparent !important;
+  border-bottom: 0px none transparent !important;
+}
+
+/* Ensure no inline styles override this */
+div[style*="border-bottom"] {
+  border-bottom: none !important;
+}
+div[style*="border-right"] {
+  border-right: none !important;
 }
 
 /* Hide All-Day Row (The white bar below header) */
@@ -168,3 +333,36 @@
 }
 
 
+
+/* --- FINAL OVERRIDES (Ensure these win) --- */
+
+/* Divider between Resource Columns (Header) - Visual Gap */
+.rbc-header + .rbc-header {
+  border-left: 8px solid transparent !important; /* True transparent gap */
+  background-clip: padding-box !important;
+  box-shadow: none !important;
+}
+.rbc-header:first-child {
+  box-shadow: none !important;
+}
+
+/* Divider between Resource Columns (Body) - Visual Gap */
+/* Apply to day-bg to cut the background */
+.rbc-day-bg + .rbc-day-bg {
+  border-left: 8px solid transparent !important;
+  background-clip: padding-box !important;
+  box-shadow: none !important;
+}
+
+/* Apply to the time-column container itself if possible, to separate the slots */
+.rbc-time-column + .rbc-time-column {
+   border-left: 8px solid transparent !important;
+   background-clip: padding-box !important;
+}
+
+/* Ensure the first column has no left shadow */
+.rbc-day-bg:first-child,
+.rbc-time-column:first-child {
+  box-shadow: none !important; 
+  border-left: none !important;
+}
