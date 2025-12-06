@@ -55,6 +55,17 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
     );
   };
 
+  const [selectedEventId, setSelectedEventId] = React.useState(null);
+
+  const handleSelectEvent = (event) => {
+    // Toggle selection
+    if (selectedEventId === event.id) {
+      setSelectedEventId(null);
+    } else {
+      setSelectedEventId(event.id);
+    }
+  };
+
   // Custom styling for events based on room
   const eventPropGetter = (event) => {
     let backgroundColor = '#475569'; // default slate
@@ -73,7 +84,10 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
       backgroundColor = event.resourceId === 'nha-trang' ? 'rgba(236, 72, 153, 0.4)' : 'rgba(124, 58, 237, 0.4)';
     }
 
+    const isSelected = event.id === selectedEventId;
+
     return {
+      className: isSelected ? 'rbc-event-expanded' : '',
       style: {
         backgroundColor,
         borderColor,
@@ -81,12 +95,13 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
         color: 'white',
         borderRadius: '4px',
         fontSize: '0.85rem',
-        width: '100%', // Attempt to force full width in style prop
+        // Critical: Apply z-index here to ensure it pops out when expanded
+        zIndex: isSelected ? 100 : 1, 
+        width: '100%', 
         maxWidth: '100%',
-        position: 'absolute', // Ensure it respects the slot
+        position: 'absolute',
         left: 0,
         right: 0,
-        // Allow height to grow on hover (handled by CSS class mostly, but style overrides help)
       }
     };
   };
@@ -128,6 +143,9 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
             }}
             eventPropGetter={eventPropGetter}
             dayLayoutAlgorithm="no-overlap"
+            onSelectEvent={handleSelectEvent}
+            onSelectSlot={() => setSelectedEventId(null)}
+            selectable={true} /* Enable slot selection to clear event selection */
           />
         </div>
       </div>
