@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Calendar, Clock, Loader2, Info } from "lucide-react";
 import {
   format,
@@ -120,6 +121,14 @@ const BookingModal = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -286,7 +295,7 @@ const BookingModal = ({
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-surface w-full max-w-md rounded-lg shadow-lg border border-slate-700 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
         <div
@@ -477,7 +486,8 @@ const BookingModal = ({
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

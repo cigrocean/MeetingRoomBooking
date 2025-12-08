@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { X, Loader2, RotateCcw } from "lucide-react";
 import { createFixedSchedule, updateFixedSchedule, fetchAvailableTimeSlots } from "../services/googleSheets";
@@ -32,6 +33,14 @@ const FixedScheduleModal = ({ onClose, onSuccess, editingSchedule = null, langua
       });
     }
   }, [editingSchedule]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   const loadData = async () => {
     try {
@@ -163,7 +172,7 @@ const FixedScheduleModal = ({ onClose, onSuccess, editingSchedule = null, langua
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm" style={{ animation: 'fadeIn 0.15s ease-out' }}>
       <div className="bg-surface w-full max-w-md rounded-lg shadow-lg border border-slate-700 max-h-[90vh] overflow-y-auto" style={{ animation: 'fadeInZoom 0.2s ease-out' }}>
         {/* Fixed Header */}
@@ -367,9 +376,9 @@ const FixedScheduleModal = ({ onClose, onSuccess, editingSchedule = null, langua
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
 export default FixedScheduleModal;
-

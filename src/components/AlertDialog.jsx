@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { CheckCircle, XCircle } from "lucide-react";
 import { useLanguage } from "../hooks/useLanguage";
 import { getTranslation } from "../utils/translations";
@@ -11,7 +12,15 @@ const AlertDialog = ({ type, title, message, link, onClose }) => {
   const textColor = isSuccess ? "text-success" : "text-danger";
   const iconColor = isSuccess ? "text-success" : "text-danger";
 
-  return (
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-surface w-full max-w-md rounded-lg shadow-lg border border-slate-700 animate-in fade-in zoom-in duration-200">
         <div
@@ -75,9 +84,9 @@ const AlertDialog = ({ type, title, message, link, onClose }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
 export default AlertDialog;
-
