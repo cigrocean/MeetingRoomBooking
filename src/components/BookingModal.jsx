@@ -11,6 +11,7 @@ import {
   addDays,
   isValid,
   parseISO,
+  subMinutes,
 } from "date-fns";
 import DatePicker from "./DatePicker";
 import { getTranslation } from "../utils/translations";
@@ -213,8 +214,10 @@ const BookingModal = ({
       return;
     }
 
-    // Validate: Cannot book in the past
-    if (isPast(start)) {
+    // Validate: Cannot book in the past (with 5 minute grace period)
+    // We allow bookings up to 5 minutes in the past to account for "just started" meetings
+    const pastLimit = subMinutes(new Date(), 5);
+    if (start < pastLimit) {
       setError(t("cannotBookInPastTime"));
       setLoading(false);
       return;
