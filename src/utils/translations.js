@@ -138,6 +138,16 @@ export const translations = {
     manageAllFixedSchedules: "Manage all fixed schedules",
     back: "Back",
     gracePeriodNote: "Note: You can proceed with booking if the time has passed by less than 5 minutes.",
+    
+    // Network Guard
+    verifyingNetwork: "Verifying network security...",
+    connectionError: "Connection Error",
+    retry: "Retry",
+    accessDenied: "Access Denied",
+    networkUnauthorized: "You need to connect to one of those networks: Cigro Litmers Endash (1-5) to access this application.",
+    currentIp: "Current IP",
+    pleaseConnectToOffice: "Please connect to the office network or VPN to continue.",
+    unableToVerifyNetwork: "Unable to verify network connection.",
   },
   ko: {
     // Dashboard
@@ -281,6 +291,16 @@ export const translations = {
     manageAllFixedSchedules: "모든 고정 일정 관리",
     back: "뒤로",
     gracePeriodNote: "참고: 시작 시간이 5분 이내로 지났다면 예약을 진행할 수 있습니다.",
+    
+    // Network Guard
+    verifyingNetwork: "네트워크 보안 확인 중...",
+    connectionError: "연결 오류",
+    retry: "재시도",
+    accessDenied: "접근 거부됨",
+    networkUnauthorized: "이 애플리케이션에 액세스하려면 다음 네트워크 중 하나에 연결해야 합니다: Cigro Litmers Endash (1-5)",
+    currentIp: "현재 IP",
+    pleaseConnectToOffice: "계속하려면 사무실 네트워크나 VPN에 연결해주세요.",
+    unableToVerifyNetwork: "네트워크 연결을 확인할 수 없습니다.",
   },
 };
 
