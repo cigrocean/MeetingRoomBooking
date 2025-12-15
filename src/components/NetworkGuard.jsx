@@ -57,7 +57,10 @@ const NetworkGuard = ({ children }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const checkAccess = async () => {
+    const checkAccess = async (showLoading = false) => {
+      // Only set loading state on initial load, not background checks
+      if (showLoading) setIsAllowed(null);
+      
       try {
         // 1. IP Check
         const response = await fetch('https://api.ipify.org?format=json');
@@ -136,7 +139,15 @@ const NetworkGuard = ({ children }) => {
       }
     };
 
-    checkAccess();
+    // Initial check
+    checkAccess(true);
+
+    // Periodic check (every 60 seconds)
+    const intervalId = setInterval(() => {
+      checkAccess(false);
+    }, 60000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   if (isAllowed === null) {
@@ -145,7 +156,7 @@ const NetworkGuard = ({ children }) => {
         <div className="animate-pulse flex flex-col items-center">
           <div className="h-4 w-48 bg-primary/20 rounded mb-4"></div>
           <p className="text-sm text-gray-500">{getTranslation('verifyingNetwork', language)}</p>
-          {ALLOWED_LOCATION && <p className="text-xs text-gray-400 mt-2">Checking Location...</p>}
+          {ALLOWED_LOCATION && <p className="text-xs text-gray-400 mt-2">{getTranslation('checkingLocation', language)}</p>}
         </div>
       </div>
     );
