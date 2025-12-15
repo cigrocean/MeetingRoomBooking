@@ -50,8 +50,8 @@ const NetworkInfo = () => {
     return (
         <div className="flex flex-col items-start gap-2 text-[10px] sm:text-xs font-mono opacity-90 max-w-full mb-1">
              {/* Network ID Pill - Purple/Blue Theme */}
-             <div className="bg-indigo-950/40 rounded px-2 py-1.5 flex flex-col sm:flex-row sm:items-center gap-2 shadow-sm backdrop-blur-sm w-full" title={`${t('networkId')}: ${ip}`}>
-                <span className="text-indigo-300 uppercase tracking-wider font-bold text-[9px] flex-shrink-0 self-start sm:self-center min-w-[70px]">{t('networkId')}</span>
+             <div className="bg-indigo-950/40 rounded px-2 py-1.5 flex flex-col sm:flex-row sm:items-center gap-2 shadow-sm backdrop-blur-sm w-full" title={`${t('networkIp')}: ${ip}`}>
+                <span className="text-indigo-300 uppercase tracking-wider font-bold text-[9px] flex-shrink-0 self-start sm:self-center min-w-[70px]">{t('networkIp')}</span>
                 <span className="text-indigo-100 font-semibold break-words min-w-0">{ip}</span>
             </div>
             

@@ -227,10 +227,25 @@ const NetworkGuard = ({ children }) => {
                   )}
                   
                   {locationStatus.status === 'error' && (
-                     <div className="text-xs text-red-500 mt-1">
-                        {locationStatus.error === 'User denied Geolocation' 
-                           ? getTranslation('permissionDenied', language) 
-                           : locationStatus.error}
+                     <div className="flex flex-col items-start gap-2 mt-1">
+                        <div className="text-xs text-red-500">
+                            {locationStatus.error === 'User denied Geolocation' 
+                            ? getTranslation('permissionDenied', language) 
+                            : locationStatus.error}
+                        </div>
+                        
+                        {/* Retry Button for Permission Issues */}
+                        <div className="flex flex-col gap-1 w-full mt-1">
+                           <p className="text-[10px] text-gray-500 italic">
+                             {getTranslation('enableLocationHelp', language)}
+                           </p>
+                           <button 
+                             onClick={() => window.location.reload()}
+                             className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded hover:opacity-90 transition-opacity self-start mt-1"
+                           >
+                             {getTranslation('retryLocation', language)}
+                           </button>
+                        </div>
                      </div>
                   )}
                </div>

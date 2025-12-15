@@ -148,7 +148,7 @@ export const translations = {
     currentIp: "Current IP",
     pleaseConnectToOffice: "Please connect to the office network or VPN to continue.",
     unableToVerifyNetwork: "Unable to verify network connection.",
-    networkId: "Network ID",
+    networkIp: "Network IP",
     clientId: "User Agent",
     location: "Location",
     locationCheck: "Location Check",
@@ -160,6 +160,8 @@ export const translations = {
     max: "Max",
     checkingLocation: "Checking Location...",
     permissionDenied: "Permission Denied",
+    retryLocation: "Retry Location Access",
+    enableLocationHelp: "Please allow Location access in your browser's site settings (address bar) and try again.",
   },
   ko: {
     // Dashboard
@@ -313,7 +315,7 @@ export const translations = {
     currentIp: "현재 IP",
     pleaseConnectToOffice: "계속하려면 사무실 네트워크나 VPN에 연결해주세요.",
     unableToVerifyNetwork: "네트워크 연결을 확인할 수 없습니다.",
-    networkId: "네트워크 ID",
+    networkIp: "네트워크 IP",
     clientId: "사용자 에이전트",
     location: "위치",
     locationCheck: "위치 확인",
@@ -325,6 +327,8 @@ export const translations = {
     max: "최대",
     checkingLocation: "위치 확인 중...",
     permissionDenied: "권한 거부됨",
+    retryLocation: "위치 권한 재요청",
+    enableLocationHelp: "브라우저 주소창의 사이트 설정에서 위치 권한을 허용하고 다시 시도해주세요.",
   },
 };
 
