@@ -22,15 +22,44 @@ const isIpInCidr = (ip, cidr) => {
   return ip === cidr;
 };
 
+const ALLOWED_LOCATION = import.meta.env.VITE_ALLOWED_LOCATION
+  ? import.meta.env.VITE_ALLOWED_LOCATION.split(',').map(coord => parseFloat(coord.trim()))
+  : null;
+
+const LOCATION_RADIUS = import.meta.env.VITE_LOCATION_RADIUS 
+  ? parseInt(import.meta.env.VITE_LOCATION_RADIUS, 10) 
+  : 300; // Default 300m
+
+// Haversine formula to calculate distance in meters
+const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
+  const R = 6371e3; // Radius of the earth in meters
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2)
+    ; 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const d = R * c; // Distance in meters
+  return d;
+}
+
+const deg2rad = (deg) => {
+  return deg * (Math.PI/180)
+}
+
 const NetworkGuard = ({ children }) => {
   const { language } = useLanguage();
-  const [isAllowed, setIsAllowed] = useState(null);
+  const [isAllowed, setIsAllowed] = useState(null); // null = loading
   const [currentIp, setCurrentIp] = useState('');
+  const [locationStatus, setLocationStatus] = useState({ status: 'pending', distance: null, coords: null, accuracy: null }); // 'pending', 'success', 'error', 'denied'
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const checkNetwork = async () => {
+    const checkAccess = async () => {
       try {
+        // 1. IP Check
         const response = await fetch('https://api.ipify.org?format=json');
         if (!response.ok) throw new Error('Failed to fetch IP');
         
@@ -39,23 +68,75 @@ const NetworkGuard = ({ children }) => {
         setCurrentIp(userIp);
         console.log('Network Check - Current Public IP:', userIp);
 
-        // Check if IP matches any allowed network
+        let ipAllowed = false;
         if (ALLOWED_NETWORKS.length === 0) {
            console.warn('No allowed networks configured. Blocking by default.');
-           setIsAllowed(false);
-           return;
+        } else {
+           ipAllowed = ALLOWED_NETWORKS.some(network => isIpInCidr(userIp, network));
         }
 
-        const allowed = ALLOWED_NETWORKS.some(network => isIpInCidr(userIp, network));
-        setIsAllowed(allowed);
+        // If IP verification fails, we can stop here or still check location for diagnostics?
+        // Let's optimize: Check IP first. If IP is good, check Location.
+        // Actually, user requested "Correct Location", usually meaning BOTH.
+        
+        // 2. Location Check (Only if configured)
+        let locationAllowed = true;
+        
+        if (ALLOWED_LOCATION && ALLOWED_LOCATION.length === 2) {
+           console.log("Checking Geolocation...");
+           
+           try {
+             const position = await new Promise((resolve, reject) => {
+               if (!navigator.geolocation) reject(new Error('Geolocation not supported'));
+               navigator.geolocation.getCurrentPosition(resolve, reject, {
+                 enableHighAccuracy: true,
+                 timeout: 10000,
+                 maximumAge: 0
+               });
+             });
+
+             const { latitude, longitude, accuracy } = position.coords;
+             const distance = getDistanceFromLatLonInMeters(
+               latitude, 
+               longitude, 
+               ALLOWED_LOCATION[0], 
+               ALLOWED_LOCATION[1]
+             );
+             
+             console.log(`Location Check: ${distance.toFixed(1)}m from target (Accuracy: ${accuracy}m)`);
+             
+             setLocationStatus({ 
+               status: 'success', 
+               distance, 
+               coords: { lat: latitude, lon: longitude }, 
+               accuracy 
+             });
+
+             if (distance > LOCATION_RADIUS) {
+               locationAllowed = false;
+               console.warn(`Access Denied: Too far (${distance.toFixed(0)}m > ${LOCATION_RADIUS}m)`);
+             }
+
+           } catch (locErr) {
+             console.error("Location check failed:", locErr);
+             // If location is REQUIRED and check fails (denied/error), strictly block?
+             // Or allow if IP is good? User said "User must be in correct location AND use correct network"
+             // IMPLICATION: Location is MANDATORY.
+             locationAllowed = false;
+             setLocationStatus({ status: 'error', error: locErr.message });
+           }
+        }
+
+        setIsAllowed(ipAllowed && locationAllowed);
+
       } catch (err) {
-        console.error('Network check failed:', err);
-        setError('Unable to verify network connection.'); // Internal error, replaced in UI
-        setIsAllowed(false); // Fail safe
+        console.error('Access check failed:', err);
+        setError('Unable to verify security requirements.');
+        setIsAllowed(false);
       }
     };
 
-    checkNetwork();
+    checkAccess();
   }, []);
 
   if (isAllowed === null) {
@@ -64,6 +145,7 @@ const NetworkGuard = ({ children }) => {
         <div className="animate-pulse flex flex-col items-center">
           <div className="h-4 w-48 bg-primary/20 rounded mb-4"></div>
           <p className="text-sm text-gray-500">{getTranslation('verifyingNetwork', language)}</p>
+          {ALLOWED_LOCATION && <p className="text-xs text-gray-400 mt-2">Checking Location...</p>}
         </div>
       </div>
     );
@@ -74,7 +156,7 @@ const NetworkGuard = ({ children }) => {
         <div className="min-h-screen flex items-center justify-center bg-bg p-4">
           <div className="bg-destructive/10 border border-destructive/20 p-6 rounded-lg max-w-md text-center">
             <h2 className="text-xl font-bold text-destructive mb-2">{getTranslation('connectionError', language)}</h2>
-            <p className="text-text/80 mb-4">{getTranslation('unableToVerifyNetwork', language)}</p>
+            <p className="text-text/80 mb-4">{error}</p>
             <button 
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-text text-bg rounded hover:opacity-90 transition"
@@ -100,9 +182,50 @@ const NetworkGuard = ({ children }) => {
           <p className="text-gray-500">
             {getTranslation('networkUnauthorized', language)}
           </p>
-          <div className="bg-gray-100 p-3 rounded text-sm font-mono text-gray-600 mt-4">
-             {getTranslation('currentIp', language)}: {currentIp}
+          
+          <div className="space-y-3 mt-6">
+             {/* IP Info */}
+             <div className="bg-gray-100 p-3 rounded text-sm font-mono text-gray-600 flex justify-between items-center">
+                <span>{getTranslation('currentIp', language)}:</span>
+                <span className="font-bold">{currentIp}</span>
+             </div>
+
+             {/* Location Info (Diagnostics) */}
+             {ALLOWED_LOCATION && (
+               <div className="bg-gray-100 p-3 rounded text-sm font-mono text-gray-600 text-left space-y-1">
+                  <div className="flex justify-between">
+                     <span>{getTranslation('locationCheck', language)}:</span> 
+                     <span className={locationStatus.status === 'success' && locationStatus.distance <= LOCATION_RADIUS ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
+                        {locationStatus.status === 'success' 
+                           ? (locationStatus.distance <= LOCATION_RADIUS ? getTranslation('passed', language) : getTranslation('failed', language)) 
+                           : getTranslation('error', language)}
+                     </span>
+                  </div>
+                  
+                  {locationStatus.status === 'success' && (
+                     <>
+                        <div className="flex justify-between text-xs">
+                           <span>{getTranslation('distance', language)}:</span>
+                           <span>{locationStatus.distance?.toFixed(0)}m ({getTranslation('max', language)}: {LOCATION_RADIUS}m)</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-400">
+                           <span>{getTranslation('accuracy', language)}:</span>
+                           <span>+/- {locationStatus.accuracy?.toFixed(0)}m</span>
+                        </div>
+                     </>
+                  )}
+                  
+                  {locationStatus.status === 'error' && (
+                     <div className="text-xs text-red-500 mt-1">
+                        {locationStatus.error === 'User denied Geolocation' 
+                           ? getTranslation('permissionDenied', language) 
+                           : locationStatus.error}
+                     </div>
+                  )}
+               </div>
+             )}
           </div>
+
           <p className="text-xs text-gray-400 mt-8">
             {getTranslation('pleaseConnectToOffice', language)}
           </p>

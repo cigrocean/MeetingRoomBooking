@@ -248,7 +248,12 @@ const Dashboard = () => {
       </div>
 
       <header className="flex flex-col mb-8 gap-4">
-        <NetworkInfo mode="title-top" />
+        <div className="w-full flex justify-center">
+             {/* Matches behaviors of the top credit section (centered, fits content) */}
+             <div className="inline-block">
+                <NetworkInfo mode="title-top" />
+             </div>
+        </div>
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 break-words">{t('meetingRooms')}</h1>
