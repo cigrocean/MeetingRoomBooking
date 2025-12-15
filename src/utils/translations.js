@@ -148,6 +148,8 @@ export const translations = {
     currentIp: "Current IP",
     pleaseConnectToOffice: "Please connect to the office network or VPN to continue.",
     unableToVerifyNetwork: "Unable to verify network connection.",
+    networkId: "Network ID",
+    clientId: "User Agent",
   },
   ko: {
     // Dashboard
@@ -301,6 +303,8 @@ export const translations = {
     currentIp: "현재 IP",
     pleaseConnectToOffice: "계속하려면 사무실 네트워크나 VPN에 연결해주세요.",
     unableToVerifyNetwork: "네트워크 연결을 확인할 수 없습니다.",
+    networkId: "네트워크 ID",
+    clientId: "User Agent",
   },
 };
 

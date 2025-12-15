@@ -12,6 +12,7 @@ import Toast from './Toast';
 import { useLanguage } from '../hooks/useLanguage';
 import { getTranslation } from '../utils/translations';
 import OnlineUsers from './OnlineUsers';
+import NetworkInfo from './NetworkInfo';
 
 const Dashboard = () => {
   const { language, toggleLanguage } = useLanguage();
@@ -247,6 +248,7 @@ const Dashboard = () => {
       </div>
 
       <header className="flex flex-col mb-8 gap-4">
+        <NetworkInfo mode="title-top" />
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 break-words">{t('meetingRooms')}</h1>
@@ -409,6 +411,7 @@ const Dashboard = () => {
           onClose={() => setToast(null)}
         />
       )}
+
     </div>
   );
 };
