@@ -22,22 +22,42 @@ const ENABLE_TIME_FILTERING = true;
 
 const BookingModal = ({
   room,
+  rooms = [], // List of all rooms
   timeSlots = [],
   bookings = [],
   onClose,
   onConfirm,
   language = "en",
+  initialData = null, // Optional: { title, date, start, end }
 }) => {
   const t = (key, params) => getTranslation(key, language, params);
-  const [title, setTitle] = useState("");
+
+  // State for the selected room (default to the room passed in via prop)
+  const [targetRoomId, setTargetRoomId] = useState(room?.id);
+  
+  // Derive the target room object
+  const targetRoom = rooms.find(r => r.id === targetRoomId) || room;
+
+  const [title, setTitle] = useState(initialData?.title || "");
   const [selectedDate, setSelectedDate] = useState(() => {
-    // Default to today, format as YYYY-MM-DD for date input
+    if (initialData?.date) return initialData.date; // YYYY-MM-DD
+    // Default to today
     return format(new Date(), "yyyy-MM-dd");
   });
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [startTime, setStartTime] = useState(initialData?.start || "");
+  const [endTime, setEndTime] = useState(initialData?.end || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [updateConfirmation, setUpdateConfirmation] = useState("");
+
+  const isEditing = !!initialData;
+
+  // Update targetRoomId if the base room prop changes (e.g. fresh open)
+  useEffect(() => {
+    if (room?.id) {
+       setTargetRoomId(room.id);
+    }
+  }, [room]);
 
   // Parse selected date with error handling
   const selectedDateObj = (() => {
@@ -47,7 +67,6 @@ const BookingModal = ({
       if (isValid(parsed)) {
         return parsed;
       }
-      // If invalid, return today's date as fallback
       return new Date();
     } catch (e) {
       console.warn("Invalid date format, using today:", e);
@@ -59,27 +78,22 @@ const BookingModal = ({
 
   // Filter time slots to exclude past times only if selected date is today
   const getAvailableTimeSlots = () => {
-    // If time filtering is disabled, return all time slots
-    if (!ENABLE_TIME_FILTERING) {
+    // If not enabled or future date, show all
+    if (!ENABLE_TIME_FILTERING || !isSelectedDateToday) {
       return timeSlots;
     }
-
-    // If the selected date is in the future, show all time slots
-    if (!isSelectedDateToday) {
-      return timeSlots;
-    }
-
-    // If selected date is today, filter out past times
+    
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     const currentTimeMinutes = currentHour * 60 + currentMinute;
 
     return timeSlots.filter((time) => {
+      // Always include the current editing times if they match
+      if (isEditing && (time === initialData.start || time === initialData.end)) return true;
+
       const [hours, minutes] = time.split(":").map(Number);
       const timeMinutes = hours * 60 + minutes;
-      // Only show times that are not more than 5 minutes in the past
-      // providing a 5-minute grace period for "late" bookings
       return timeMinutes > currentTimeMinutes - 5;
     });
   };
@@ -88,7 +102,8 @@ const BookingModal = ({
 
   // Set default values when timeSlots are available or when date changes
   useEffect(() => {
-    if (availableTimeSlots.length > 0 && !startTime && !endTime) {
+    // Only auto-set defaults if NOT editing or if user cleared the values
+    if (!isEditing && availableTimeSlots.length > 0 && !startTime && !endTime) {
       setStartTime(availableTimeSlots[0]);
       if (availableTimeSlots.length > 1) {
         setEndTime(availableTimeSlots[1]);
@@ -133,6 +148,8 @@ const BookingModal = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+    
     setLoading(true);
     setError(""); // Clear previous errors
 
@@ -155,7 +172,10 @@ const BookingModal = ({
     const today = startOfDay(new Date());
     const selectedDateStartOfDay = startOfDay(selectedDateParsed);
 
-    if (selectedDateStartOfDay < today) {
+    // Check if date/time are unchanged during edit (allowing metadata updates for past bookings)
+    const isUnchangedForDateCheck = isEditing && initialData && selectedDate === initialData.date;
+
+    if (!isUnchangedForDateCheck && selectedDateStartOfDay < today) {
       setError(t("cannotBookInPast"));
       setLoading(false);
       return;
@@ -214,13 +234,22 @@ const BookingModal = ({
       return;
     }
 
+    // Check if date/time are unchanged during edit (allowing metadata updates for past bookings)
+    const isTimeUnchanged = isEditing && initialData && 
+        selectedDate === initialData.date &&
+        startTime === initialData.start &&
+        endTime === initialData.end;
+
     // Validate: Cannot book in the past (with 5 minute grace period)
     // We allow bookings up to 5 minutes in the past to account for "just started" meetings
-    const pastLimit = subMinutes(new Date(), 5);
-    if (start < pastLimit) {
-      setError(t("cannotBookInPastTime"));
-      setLoading(false);
-      return;
+    // SKIP this check if we are editing an existing booking and haven't changed the time
+    if (!isTimeUnchanged) {
+        const pastLimit = subMinutes(new Date(), 5);
+        if (start < pastLimit) {
+          setError(t("cannotBookInPastTime"));
+          setLoading(false);
+          return;
+        }
     }
 
     // Validate: Check for conflicts with existing bookings on the selected date
@@ -237,8 +266,16 @@ const BookingModal = ({
 
     // Check if the new booking overlaps with any existing booking for this room on the selected date
     const conflictingBooking = bookings.find((existingBooking) => {
-      if (!existingBooking || existingBooking.room_id !== room.id) {
+      // Must match the TARGET room
+      if (!existingBooking || existingBooking.room_id !== targetRoom.id) {
         return false;
+      }
+
+      // If editing, skip the booking that is being updated
+      if (isEditing) {
+          if (initialData?.originalId === existingBooking.id) {
+              return false;
+          }
       }
 
       const existingStart = new Date(existingBooking.start_time);
@@ -281,7 +318,7 @@ const BookingModal = ({
 
     try {
       await onConfirm({
-        room_id: room.id,
+        room_id: targetRoom.id, // Use the selected room ID!
         title,
         requested_by: "Current User", // TODO: Auth
         start_time: start.toISOString(),
@@ -311,7 +348,7 @@ const BookingModal = ({
           }}
         >
           <h2 className="text-lg sm:text-xl font-bold text-white">
-            {t("bookMeetingRoom")} {room.name}
+            {isEditing ? t("editBooking") : t("bookMeetingRoom")} {isEditing ? "" : room.name}
           </h2>
           <button
             onClick={onClose}
@@ -348,6 +385,33 @@ const BookingModal = ({
           {error && (
             <div className="bg-danger/20 border border-danger text-danger px-3 py-2 rounded-lg text-sm">
               {error}
+            </div>
+          )}
+
+          {/* Room Selector (Only show if Multiple Rooms available AND IS EDITING) */}
+          {rooms.length > 0 && isEditing && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <label className="block text-sm font-medium text-muted" style={{ marginBottom: "0.75rem", display: "block" }}>
+                {t("room")}
+              </label>
+              <div className="relative">
+                <select
+                    value={targetRoomId}
+                    onChange={(e) => setTargetRoomId(e.target.value)}
+                    disabled={loading}
+                    className="w-full bg-surface-alt border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-primary text-base disabled:opacity-50 appearance-none cursor-pointer"
+                >
+                    {rooms.map(r => (
+                        <option key={r.id} value={r.id}>
+                            {r.name}
+                        </option>
+                    ))}
+                </select>
+                {/* Custom arrow for better UI consistency if needed */}
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-muted">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
             </div>
           )}
 
@@ -473,18 +537,37 @@ const BookingModal = ({
             </div>
           </div>
 
+          {isEditing && (
+            <div 
+              className="bg-surface-hover p-4 rounded-lg border border-blue-500/30 animate-in fade-in zoom-in duration-200 flex flex-col gap-4"
+              style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}
+            >
+               <label className="block text-sm text-blue-300 font-medium">
+                   {t('typeToConfirmUpdate')}
+               </label>
+               <input 
+                   type="text" 
+                   value={updateConfirmation}
+                   onChange={(e) => setUpdateConfirmation(e.target.value)}
+                   placeholder={t('updateConfirmationPlaceholder')}
+                   className="w-full bg-black/20 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                   disabled={loading}
+               />
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (isEditing && updateConfirmation !== 'UPDATE')}
             className="mt-2 w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary-hover hover:to-blue-700 text-white-fixed py-3 rounded-lg font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 text-base mb-1"
           >
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 flex-shrink-0 animate-spin" />
-                <span>{t("booking")}</span>
+                <span>{isEditing ? t("updating") : t("booking")}</span>
               </>
             ) : (
-              t("confirmBooking")
+              isEditing ? t("updateBooking") : t("confirmBooking")
             )}
           </button>
         </form>

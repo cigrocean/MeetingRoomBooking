@@ -5,13 +5,15 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './CalendarStyles.css';
 import { useLanguage } from '../hooks/useLanguage';
 import { getTranslation } from '../utils/translations';
+import BookingDetailsModal from './BookingDetailsModal';
 
 // Setup the localizer for react-big-calendar
 const localizer = momentLocalizer(moment);
 
-const LibraryRoomCalendar = ({ rooms, bookings }) => {
+const LibraryRoomCalendar = ({ rooms, bookings, onRefresh, onEditBooking, onShowToast }) => {
   const { language } = useLanguage();
   const t = (key, params) => getTranslation(key, language, params);
+  const [selectedBooking, setSelectedBooking] = React.useState(null);
 
   // Convert bookings to calendar events
   const events = useMemo(() => {
@@ -21,6 +23,10 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
       start: new Date(booking.start_time),
       end: new Date(booking.end_time),
       resourceId: booking.room_id,
+      // Add properties required by Dashboard's handleEditBooking
+      room_id: booking.room_id,
+      start_time: booking.start_time,
+      end_time: booking.end_time,
       desc: booking.requested_by,
       isFixedSchedule: booking.isFixedSchedule
     }));
@@ -35,7 +41,6 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
     }));
   }, [rooms]);
 
-  // Custom Event Component
   const EventComponent = ({ event }) => {
     const start = moment(event.start);
     const end = moment(event.end);
@@ -46,24 +51,19 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
       <div 
         className={`h-full flex ${isShort ? 'flex-row items-center gap-2' : 'flex-col justify-center'} px-1`} 
         title={`${event.desc} (${start.format('HH:mm')} - ${end.format('HH:mm')})`}
+        style={{ color: 'white' }}
       >
-        <div className="text-xs font-semibold break-words leading-tight">{event.desc}</div>
-        <div className={`text-[10px] opacity-75 flex-shrink-0 ${isShort ? '' : ''}`}>
+        <div className="text-xs font-semibold break-words leading-tight" style={{ color: 'white !important' }}>{event.desc}</div>
+        <div className={`text-[10px] flex-shrink-0 ${isShort ? '' : ''}`} style={{ color: 'rgba(255, 255, 255, 0.8) !important' }}>
           {start.format('HH:mm')} - {end.format('HH:mm')}
         </div>
       </div>
     );
   };
 
-  const [selectedEventId, setSelectedEventId] = React.useState(null);
-
   const handleSelectEvent = (event) => {
-    // Toggle selection
-    if (selectedEventId === event.id) {
-      setSelectedEventId(null);
-    } else {
-      setSelectedEventId(event.id);
-    }
+    // Open Details Modal
+    setSelectedBooking(event);
   };
 
   // Custom styling for events based on room
@@ -72,22 +72,19 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
     let borderColor = '#334155';
     
     if (event.resourceId === 'nha-trang') {
-      backgroundColor = 'rgba(236, 72, 153, 0.7)'; // pink-500 equivalent
+      backgroundColor = 'rgba(236, 72, 153, 0.85)'; // pink-500
       borderColor = 'rgb(236, 72, 153)';
     } else if (event.resourceId === 'da-lat') {
-      backgroundColor = 'rgba(124, 58, 237, 0.7)'; // violet-600 equivalent
+      backgroundColor = 'rgba(124, 58, 237, 0.85)'; // violet-600
       borderColor = 'rgb(124, 58, 237)';
     }
 
     if (event.isFixedSchedule) {
       // Add visual distinction for fixed schedules
-      backgroundColor = event.resourceId === 'nha-trang' ? 'rgba(236, 72, 153, 0.4)' : 'rgba(124, 58, 237, 0.4)';
+      backgroundColor = event.resourceId === 'nha-trang' ? 'rgba(236, 72, 153, 0.6)' : 'rgba(124, 58, 237, 0.6)';
     }
 
-    const isSelected = event.id === selectedEventId;
-
     return {
-      className: isSelected ? 'rbc-event-expanded' : '',
       style: {
         backgroundColor,
         borderColor,
@@ -95,21 +92,14 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
         color: 'white',
         borderRadius: '4px',
         fontSize: '0.85rem',
-        // Critical: Apply z-index here to ensure it pops out when expanded
-        zIndex: isSelected ? 100 : 1, 
-        width: '100%', 
-        maxWidth: '100%',
-        position: 'absolute',
-        left: 0,
-        right: 0,
       }
     };
   };
 
   return (
     <div className="w-full bg-surface/50 backdrop-blur-md rounded-xl overflow-hidden shadow-xl">
-      <div className="py-4 flex justify-start items-center">
-        <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+      <div className="py-4 px-4 flex justify-start items-center border-b border-white/10 flex-wrap gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2 text-white">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -118,10 +108,13 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
           </svg>
           {t('roomSchedule')}
         </h2>
+        <span className="text-xs font-medium text-white/70 bg-white/10 px-3 py-1 rounded-full border border-white/5 shadow-sm sm:ml-2 mt-1 sm:mt-0">
+          {t('scheduleHint')}
+        </span>
       </div>
       
-      <div className="overflow-x-auto w-full">
-        <div className="h-[600px] min-w-[800px] relative" style={{ color: 'var(--color-text)' }}>
+      <div className="overflow-x-auto w-full p-2">
+        <div className="h-[600px] min-w-[800px] relative text-white">
           <Calendar
             localizer={localizer}
             events={events}
@@ -144,11 +137,30 @@ const LibraryRoomCalendar = ({ rooms, bookings }) => {
             eventPropGetter={eventPropGetter}
             dayLayoutAlgorithm="no-overlap"
             onSelectEvent={handleSelectEvent}
-            onSelectSlot={() => setSelectedEventId(null)}
-            selectable={true} /* Enable slot selection to clear event selection */
+            selectable={false} 
           />
         </div>
       </div>
+
+      {selectedBooking && (
+        <BookingDetailsModal 
+          booking={selectedBooking} 
+          roomName={resources.find(r => r.id === selectedBooking.resourceId)?.title || selectedBooking.resourceId}
+          language={language}
+          onClose={() => setSelectedBooking(null)}
+          onDeleteSuccess={() => {
+              // Refresh data
+              if (onRefresh) onRefresh();
+          }}
+          onEdit={(booking) => {
+             // Close details modal
+             setSelectedBooking(null);
+             // Trigger parent edit
+             if (onEditBooking) onEditBooking(booking);
+          }}
+          onShowToast={onShowToast}
+        />
+      )}
     </div>
   );
 };

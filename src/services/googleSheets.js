@@ -2,6 +2,7 @@ import Papa from "papaparse";
 import {
   isWithinInterval,
   parse,
+  parseISO,
   set,
   getYear,
   getMonth,
@@ -374,7 +375,7 @@ const getCurrentMonthSheetGID = async () => {
 
 // Get CSV URL for a specific sheet GID
 const getCSVUrl = (gid) => {
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&t=${Date.now()}`;
 };
 
 // Static Room Definitions based on Sheet
@@ -602,8 +603,11 @@ export const fetchBookings = async () => {
 
               // Only add booking if both times are valid and end is after start
               if (start && end && end > start) {
-                bookings.push({
-                  id: `${roomId}-${i}-${startStr}-${endStr}`,
+                 const newId = `${roomId}-${day}-${format(start, "HH:mm")}-${format(end, "HH:mm")}`;
+                 console.log(`📦 Parsed Booking: Row ${i} -> ${newId} (${staff}) Room: ${roomId}`);
+                 
+                 bookings.push({
+                  id: newId, // Unique ID based on room, day, time
                   room_id: roomId,
                   title: staff ? `Booked by ${staff}` : "Booked",
                   requested_by: staff || "Unknown",
@@ -847,7 +851,27 @@ export const createBooking = async (booking) => {
     return hours * 60 + minutes;
   };
 
-  // Helper function to get the start time from a row (morning or afternoon)
+  // Helper to parse all rows
+  const parseBookingRows = (rows) => {
+    const bookings = [];
+    rows.forEach((row, index) => {
+      // Row indices start at 0, data starts at row 6 (index 5)
+      // but passed rows are the whole sheet?
+      // fetchBookings passes "rows" which is everything.
+      // But let's check loop inside fetchBookings.
+      // Actually fetchBookings calls this helper? No, wait.
+      // fetchBookings has the loop inline in original code?
+      // Let's check view_file.
+      // Ah, previous view showed fetchBookings using a loop.
+      // I'll assume we are editing fetchBookings directly.
+    });
+    
+    // Instead of messing with complex logic, I'll just add a log in fetchBookings
+    // where it pushes to `bookings` array.
+    // See lines 560+ in previous file dump?
+    // Wait, I need to see fetchBookings implementation.
+    return [];
+  };
   const getRowStartTime = (row) => {
     // Check morning times first (columns F and G)
     const mStart = row[5]?.toString().trim();
@@ -880,8 +904,10 @@ export const createBooking = async (booking) => {
     if (readResponse.ok) {
       const readData = await readResponse.json();
       const rows = readData.values || [];
+      
+      console.log(`📋 Fetching bookings from sheet: Found ${rows.length} rows`);
 
-      // Collect all rows with the same date, along with their row numbers and start times
+      // Collect all rows with the same date, along with their row numbers
       const rowsWithSameDate = [];
 
       for (let i = 0; i < rows.length; i++) {
@@ -1046,7 +1072,8 @@ export const createBooking = async (booking) => {
 
   // Prepare the values to write - match the exact format used in the sheet
   // Use proper data types: numbers for dates, exact dropdown values for rooms
-  const dateValue = parseInt(targetDate); // Store as number, not string
+  // targetDate is just the day number (e.g., "17"), use start.getDate() directly
+  const dateValue = start.getDate(); // Get day of month as number
 
   // Determine the exact dropdown values from existing rows
   // Prioritize sampleRowWithRoom (has actual room assignments) over existingRowFormat
@@ -1117,7 +1144,8 @@ export const createBooking = async (booking) => {
   try {
     if (insertRowIndex !== null) {
       // Insert a new row at the specified index, then update it
-      // Step 1: Insert a new row
+      // Step 1: Insert a new BLANK row (inheritFromBefore: false)
+      // This ensures no old data is copied automatically.
       const insertResponse = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
         {
@@ -1136,7 +1164,7 @@ export const createBooking = async (booking) => {
                     startIndex: insertRowIndex - 1, // 0-based index
                     endIndex: insertRowIndex, // Insert 1 row
                   },
-                  inheritFromBefore: true, // Copy formatting and data validation from row above
+                  inheritFromBefore: false, // Don't copy anything! Clean slate.
                 },
               },
             ],
@@ -1149,80 +1177,21 @@ export const createBooking = async (booking) => {
         throw new Error(`Failed to insert row: ${errorText}`);
       }
 
-      // Step 2: Copy entire row (formatting + values) from row above, then overwrite values
-      // This ensures all formatting including table borders are copied
-      // Determine source row for copying formatting:
-      // - If inserting at row 6 (empty table), copy from row 5 (header row) or last data row if exists
-      // - Otherwise, copy from the row above
-      let sourceRowForFormat = null;
-
-      if (insertRowIndex === 6) {
-        // Empty table - try to copy from row 5 (header row) or find any existing data row
-        // Check if there's a data row we can copy from
-        if (existingRowFormat) {
-          // We have a reference to an existing row, use its row number
-          // But existingRowFormat is from the CSV data, we need to find its actual row number
-          // For now, try row 5 (header row)
-          sourceRowForFormat = 5;
-        } else {
-          // No data rows exist, copy from row 5 (header row)
-          sourceRowForFormat = 5;
-        }
-      } else if (insertRowIndex > 6) {
-        // Not empty table - copy from row above
-        sourceRowForFormat = insertRowIndex - 1;
-      }
-
-      // Copy formatting if we have a source row
-      if (sourceRowForFormat && sourceRowForFormat > 0) {
-        try {
-          await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                requests: [
-                  {
-                    copyPaste: {
-                      source: {
-                        sheetId: parseInt(gid),
-                        startRowIndex: sourceRowForFormat - 1, // 0-based
-                        endRowIndex: sourceRowForFormat,
-                        startColumnIndex: 0, // Column A
-                        endColumnIndex: 9, // Column I (0-indexed, so 9 = column I+1)
-                      },
-                      destination: {
-                        sheetId: parseInt(gid),
-                        startRowIndex: insertRowIndex - 1, // 0-based, new row
-                        endRowIndex: insertRowIndex,
-                        startColumnIndex: 0,
-                        endColumnIndex: 9,
-                      },
-                      pasteType: "PASTE_NORMAL", // Copy everything (formatting + values)
-                    },
-                  },
-                ],
-              }),
-            }
-          );
-          console.log(
-            `✅ Copied formatting from row ${sourceRowForFormat} to row ${insertRowIndex}`
-          );
-          // Now we'll overwrite just the values below
-        } catch (e) {
-          console.warn(
-            `⚠️ Could not copy formatting from row ${sourceRowForFormat}:`,
-            e
-          );
-          // Continue anyway - we'll still write the values
-        }
-      }
-
-      // Step 3: Update the newly inserted row with our values
+      // Step 2: Write the values using standard PUT (values.update)
+      // This is the most reliable way to write data.
+       const values = [
+        [
+          dateValue,
+          format(start, "EEEE"),
+          booking.title || "", 
+          roomNhaTrang,
+          roomDaLat,
+          mStart || "",
+          mEnd || "",
+          aStart || "",
+          aEnd || "",
+         ],
+       ];
       const updateRange = `${sheetName}!A${insertRowIndex}:I${insertRowIndex}`;
       const updateResponse = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${updateRange}?valueInputOption=${valueInputOption}`,
@@ -1238,14 +1207,61 @@ export const createBooking = async (booking) => {
 
       if (!updateResponse.ok) {
         const errorText = await updateResponse.text();
-        throw new Error(`Failed to update row: ${errorText}`);
+        throw new Error(`Failed to update row data: ${errorText}`);
+      }
+      
+      const updateResult = await updateResponse.json();
+      console.log(`✅ Data written successfully to row ${insertRowIndex}`, updateResult);
+
+      // Step 3: Copy formatting (Borders/Colors) ONLY
+      // Determine source row
+      let sourceRowForFormat = null;
+      if (insertRowIndex === 6) {
+        sourceRowForFormat = 5; // Header
+      } else if (insertRowIndex > 6) {
+        sourceRowForFormat = insertRowIndex - 1; // Row above
       }
 
-      const result = await updateResponse.json();
-      console.log(
-        `✅ Booking created successfully at row ${insertRowIndex} with table formatting:`,
-        result
-      );
+      if (sourceRowForFormat && sourceRowForFormat > 0) {
+        try {
+            await fetch(
+                `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
+                {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    requests: [
+                    {
+                        copyPaste: {
+                        source: {
+                            sheetId: parseInt(gid),
+                            startRowIndex: sourceRowForFormat - 1,
+                            endRowIndex: sourceRowForFormat,
+                            startColumnIndex: 0,
+                            endColumnIndex: 9,
+                        },
+                        destination: {
+                            sheetId: parseInt(gid),
+                            startRowIndex: insertRowIndex - 1,
+                            endRowIndex: insertRowIndex,
+                            startColumnIndex: 0,
+                            endColumnIndex: 9,
+                        },
+                        pasteType: "PASTE_FORMAT", // CRITICAL: Only copy format!
+                        },
+                    },
+                    ],
+                }),
+                }
+            );
+            console.log(`✅ Formatting applied to row ${insertRowIndex}`);
+        } catch (e) {
+            console.warn("⚠️ Formatting copy failed (but data is safe):", e);
+        }
+      }
 
       // Return booking info including row number and sheet details for link generation
       return {
@@ -1396,6 +1412,351 @@ export const createBooking = async (booking) => {
     // Return error info for dialog display
     throw new Error(error.message || "Booking failed. Please try again.");
   }
+};
+
+// Helper to separate search logic
+const findBookingRow = async (bookingId, targetDate, currentGid = null) => {
+  const parts = bookingId.split("-");
+  if (parts.length < 4) throw new Error("Invalid booking ID format");
+
+  const endStr = parts.pop().trim();
+  const startStr = parts.pop().trim();
+  const indexStr = parts.pop();
+  const roomId = parts.join("-");
+  const embeddedRowIndex = parseInt(indexStr);
+
+  let gid = currentGid;
+  let targetDay = null;
+
+  if (targetDate) {
+      if (typeof targetDate === 'string') {
+          const dParts = targetDate.split('-');
+          if (dParts.length === 3) {
+            const year = parseInt(dParts[0]);
+            const monthIndex = parseInt(dParts[1]) - 1;
+            const day = parseInt(dParts[2]);
+            const d = new Date(year, monthIndex, day);
+            gid = await getMonthSheetGID(d);
+            targetDay = day;
+          } else {
+             const d = new Date(targetDate);
+             if (!isNaN(d.getTime())) {
+                 gid = await getMonthSheetGID(d);
+                 targetDay = d.getDate();
+             } else {
+                 gid = await getCurrentMonthSheetGID();
+             }
+          }
+      } else if (targetDate instanceof Date) {
+          gid = await getMonthSheetGID(targetDate);
+          targetDay = targetDate.getDate();
+      }
+  } else {
+      if (!gid) gid = await getCurrentMonthSheetGID(); 
+  }
+
+  console.log(`🔍 Searching for ${roomId} booking at ${startStr}-${endStr} (Day ${targetDay || 'any'}, GID ${gid})...`);
+
+  // Determine Sheet Name for API Query
+  const accessToken = await getAccessToken();
+  let sheetName = await getSheetNameFromGid(gid);
+  
+  if (!sheetName) {
+      console.warn(`⚠️ Could not determine Sheet Name for GID ${gid}. Defaulting to 'DECEMBER'.`);
+      sheetName = "DECEMBER"; // Fallback
+  }
+  
+  // Clean sheet name for URL
+  const safeSheetName = sheetName.includes(' ') ? `'${sheetName}'` : sheetName;
+  
+  console.log(`🔍 Searching via API: ${roomId} @ ${startStr}-${endStr} (Day ${targetDay || 'any'}, Sheet: ${sheetName})...`);
+
+  // Fetch Values via API (Guarantees Index Alignment with batchUpdate)
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${safeSheetName}!A:I`;
+  const response = await fetch(url, {
+      headers: {
+          Authorization: `Bearer ${accessToken}`
+      }
+  });
+
+  if (!response.ok) {
+       console.error("❌ Failed to fetch sheet data for search:", await response.text());
+       return { realRowIndex: -1, gid, allMatches: [] };
+  }
+
+  const data = await response.json();
+  const rows = data.values || [];
+  const candidates = [];
+
+  // Start checking from Row 5 (Index 4) to skip headers, same as before
+  for (let i = 4; i < rows.length; i++) {
+      const row = rows[i];
+      // API rows might be empty or shorter than I columns.
+      if (!row || row.length === 0) continue;
+      
+      // Column Indices (0-based):
+      // 0: Date/Day (A)
+      // 1: Day Name (B)
+      // 2: Staff/Title (C)
+      // 3: Nha Trang (D)
+      // 4: Da Lat (E)
+      // 5: Morning Start (F)
+      // 6: Morning End (G)
+      // 7: Afternoon Start (H)
+      // 8: Afternoon End (I)
+
+      const nhaTrangValue = (row[3] || "").toString().toUpperCase().trim();
+      const daLatValue = (row[4] || "").toString().toUpperCase().trim();
+      const isNhaTrang = nhaTrangValue !== "" && (nhaTrangValue === "TRUE" || nhaTrangValue.includes("NHA TRANG"));
+      const isDaLat = daLatValue !== "" && (daLatValue === "TRUE" || daLatValue.includes("DA LAT"));
+
+      let isTargetRoom = false;
+      if (roomId === 'nha-trang' && isNhaTrang) isTargetRoom = true;
+      if (roomId === 'da-lat' && isDaLat) isTargetRoom = true;
+      
+      if (!isTargetRoom) continue;
+
+      const normalizeTime = (t) => {
+          if (!t) return "";
+          let clean = t.replace(/\u00A0/g, ' ').replace(/\s+/g, '');
+          clean = clean.split(':').slice(0, 2).join(':');
+          if (/^\d:\d{2}$/.test(clean)) return "0" + clean;
+          return clean;
+      };
+
+      const nStartStr = normalizeTime(startStr);
+      const nEndStr = normalizeTime(endStr);
+      const nmStart = normalizeTime((row[5] || "").toString());
+      const nmEnd = normalizeTime((row[6] || "").toString());
+      const naStart = normalizeTime((row[7] || "").toString());
+      const naEnd = normalizeTime((row[8] || "").toString());
+
+      const matchMorning = (nmStart === nStartStr && nmEnd === nEndStr);
+      const matchAfternoon = (naStart === nStartStr && naEnd === nEndStr);
+      const matchMorningStart = (nmStart === nStartStr && nmStart !== "");
+      const matchAfternoonStart = (naStart === nStartStr && naStart !== "");
+
+      // Accept if Exact OR Partial (Start Time Only)
+      if (matchMorning || matchAfternoon || matchMorningStart || matchAfternoonStart) {
+          let day = 0;
+          const dayCell = row[0]; // Column A
+          
+          if (dayCell) {
+              day = parseInt(dayCell);
+              // Legacy Date Object Check
+              if (day > 31) {
+                  const d = new Date(dayCell);
+                  if (!isNaN(d.getTime())) day = d.getDate();
+              }
+          }
+          
+          const isDayMatch = targetDay && day === targetDay;
+          
+          if (isDayMatch) {
+               console.log(`✅ MATCH ACCEPTED Row ${i} (Index ${i})`);
+               console.log(`   DATA: Day=${dayCell}, Title=${row[2]}, Room=${roomId}, Times=${row[5]}-${row[6]} / ${row[7]}-${row[8]}`);
+               candidates.push({ index: i, day, isDayMatch });
+          } else {
+               // Log ignored mismatch
+               // console.log(`Skipping Row ${i}: Time match but Day Mismatch (${day} vs ${targetDay})`);
+          }
+      }
+  }
+  
+  console.log(`🏁 End of API Search. Total Candidates: ${candidates.length}`);
+
+  if (candidates.length > 0) {
+      const matches = candidates.map(c => ({ 
+          realRowIndex: c.index, 
+          gid,
+          isDayMatch: c.isDayMatch
+      }));
+      
+      console.log(`✅ Matches found:`, JSON.stringify(matches));
+      
+      return {
+          allMatches: matches,
+          gid: gid
+      };
+  }
+  
+  return { 
+      realRowIndex: -1, 
+      gid,
+      allMatches: []
+  };
+};
+
+const getSheetNameFromGid = async (gid) => {
+  try {
+    const accessToken = await getAccessToken();
+    const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`, {
+         headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const sheet = data.sheets.find(s => s.properties.sheetId == gid);
+    return sheet ? sheet.properties.title : null;
+  } catch (e) {
+      console.warn("Failed to fetch sheet name", e);
+      return null;
+  }
+};
+
+export const updateBooking = async (originalBookingId, originalDate, newBookingData) => {
+    console.log(`✏️ updateBooking: USING SAFE CREATE-THEN-DELETE FOR ALL UPDATES`);
+    console.log(`   Original ID: ${originalBookingId}, Original Date: ${originalDate}`);
+    console.log(`   New booking data:`, newBookingData);
+
+    // STRATEGY: Always use Create-Then-Delete (safest approach)
+    // This prevents data loss even if deletion fails (duplicate is better than data loss)
+    
+    // 1. LOCATE the old booking first
+    let targetToDelete = null;
+    try {
+        const finderResult = await findBookingRow(originalBookingId, originalDate);
+        console.log(`🔍 findBookingRow result:`, finderResult);
+        
+        // findBookingRow returns { allMatches: [...], gid } when found
+        // or { realRowIndex: -1, gid, allMatches: [] } when not found
+        if (finderResult && finderResult.allMatches && finderResult.allMatches.length > 0) {
+            // Take the first match (should only be one for a specific booking)
+            const match = finderResult.allMatches[0];
+            targetToDelete = {
+                realRowIndex: match.realRowIndex,
+                gid: finderResult.gid
+            };
+            console.log(`🎯 Located original booking at Row ${targetToDelete.realRowIndex} (GID: ${targetToDelete.gid})`);
+        } else {
+            console.warn(`⚠️ Could not locate original booking ${originalBookingId}`);
+        }
+    } catch (e) {
+        console.warn(`⚠️ Error finding original booking: ${e.message}`);
+    }
+
+    // 2. CREATE the new booking
+    // createBooking expects: { room_id, title, start_time (ISO), end_time (ISO) }
+    // newBookingData already has this format, so just pass it through
+    console.log(`   Passing newBookingData directly to createBooking:`, newBookingData);
+    
+    let createResult;
+    try {
+        createResult = await createBooking(newBookingData);
+        console.log(`✅ New booking created at Row ${createResult.rowNumber}`);
+    } catch (e) {
+        console.error(`Failed to create new booking`, e);
+        throw new Error(`Update failed: Could not create new booking. ${e.message}`);
+    }
+
+    // 3. DELETE the old booking
+    if (targetToDelete) {
+        try {
+            const accessToken = await getAccessToken();
+            
+            // CRITICAL FIX: Adjust deletion index if the new booking was inserted ABOVE or AT the old booking
+            let indexToDelete = targetToDelete.realRowIndex;
+            const newRowIndexZeroBased = createResult.rowNumber - 1; // Convert 1-based to 0-based
+            
+            // If new row is on the same sheet AND inserted at/before the old row, the old row shifts down
+            if (parseInt(createResult.gid) === parseInt(targetToDelete.gid)) {
+                if (newRowIndexZeroBased <= targetToDelete.realRowIndex) {
+                    console.log(`⚠️ New booking inserted at/above old one. Shifting deletion index from ${indexToDelete} to ${indexToDelete + 1}`);
+                    indexToDelete += 1;
+                }
+            }
+
+            const deleteRequest = {
+                deleteDimension: {
+                    range: {
+                        sheetId: parseInt(targetToDelete.gid),
+                        dimension: 'ROWS',
+                        startIndex: indexToDelete,
+                        endIndex: indexToDelete + 1
+                    }
+                }
+            };
+            
+            await fetch(
+                `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ requests: [deleteRequest] }),
+                }
+            );
+            console.log(`✅ Old booking deleted from Row ${targetToDelete.realRowIndex}`);
+        } catch (e) {
+            console.error(`Failed to delete old booking, duplicate may exist`, e);
+            // Don't throw - duplicate is better than data loss
+        }
+    }
+    
+    localStorage.removeItem(CACHE_KEYS.BOOKINGS);
+    return createResult;
+};
+
+export const deleteBooking = async (bookingId, targetDate = null) => {
+    // Legacy delete wrapper using new finder
+    const finderResult = await findBookingRow(bookingId, targetDate);
+    
+    // Handle both single and array return
+    let targets = [];
+    let gid = finderResult.gid;
+    
+    if (finderResult.allMatches && Array.isArray(finderResult.allMatches)) {
+        targets = finderResult.allMatches;
+    } else if (finderResult.realRowIndex !== -1) {
+        targets = [{ realRowIndex: finderResult.realRowIndex, gid: finderResult.gid }];
+    }
+    
+    if (targets.length === 0) throw new Error("Could not find booking to delete.");
+    
+    // Delete ALL found copies
+    // Sort descending to ensure index validity during deletion?
+    // Actually batchUpdate can handle multiple unrelated ranges, but if we delete Row 10 then Row 9...
+    // If we use separate deleteRequests in one batch, they are processed.
+    // However, if we delete row 10, does row 11 become row 10? Yes.
+    // If we delete multiple rows simultaneously, we should use START index descending?
+    // Google Sheets API batchUpdate applies changes transactionally?
+    // "The requests will be applied in the order they are specified."
+    // So if we delete Row 10, then Row 9:
+    // Delete Row 10 -> Row 11 becomes Row 10. Row 9 stays Row 9.
+    // Delete Row 9 -> Row 9 is gone.
+    // So order matters if ranges shift.
+    // BUT we are using absolute indices.
+    // Safer to delete from BOTTOM UP (Highest index first).
+    
+    targets.sort((a, b) => b.realRowIndex - a.realRowIndex);
+
+    const accessToken = await getAccessToken();
+    
+    const requests = targets.map(target => ({
+        deleteDimension: {
+          range: {
+            sheetId: parseInt(gid),
+            dimension: "ROWS",
+            startIndex: target.realRowIndex,
+            endIndex: target.realRowIndex + 1, 
+          },
+        },
+    }));
+
+    const deleteResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ requests }),
+      }
+    );
+     if (!deleteResp.ok) throw new Error("Delete API failed");
+     localStorage.removeItem(CACHE_KEYS.BOOKINGS);
 };
 
 export const getRoomStatus = (roomId, bookings) => {

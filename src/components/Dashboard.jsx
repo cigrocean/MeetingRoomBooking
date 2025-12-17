@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import RoomCard from './RoomCard';
 import LibraryRoomCalendar from './LibraryRoomCalendar';
 import SkeletonRoomCard from './SkeletonRoomCard';
 
-import { fetchRooms, fetchBookings, getRoomStatus, createBooking, fetchAvailableTimeSlots, getSheetUrl, fetchFixedSchedules, CACHE_KEYS, getFromCache } from '../services/googleSheets';
+import { fetchRooms, fetchBookings, getRoomStatus, createBooking, deleteBooking, updateBooking, fetchAvailableTimeSlots, getSheetUrl, fetchFixedSchedules, CACHE_KEYS, getFromCache } from '../services/googleSheets';
 import BookingModal from './BookingModal';
 import FixedScheduleModal from './FixedScheduleModal';
 import AlertDialog from './AlertDialog';
@@ -91,14 +92,69 @@ const Dashboard = () => {
     }
   }, [language]);
 
+  const [editingBooking, setEditingBooking] = useState(null);
+  const [newBooking, setNewBooking] = useState(null);
+  const [bookingSuccessOpen, setBookingSuccessOpen] = useState(false);
+
   const handleBook = (room) => {
+    setEditingBooking(null);
     setSelectedRoom(room);
+  };
+
+  const handleEditBooking = (booking) => {
+     // Prepare data for BookingModal
+     const room = rooms.find(r => r.id === booking.room_id) || { id: booking.room_id, name: t('unknownRoom') };
+     const startDate = new Date(booking.start_time);
+     const endDate = new Date(booking.end_time);
+          console.log("✏️ handleEditBooking capturing ID:", booking.id);
+      setEditingBooking({
+          originalId: booking.id,
+          title: booking.title.replace('Booked by ', ''),
+          date: format(startDate, 'yyyy-MM-dd'),
+          start: format(startDate, 'HH:mm'),
+          end: format(endDate, 'HH:mm'),
+      });
+     setSelectedRoom(room);
   };
 
   const handleBookingConfirm = async (bookingData) => {
     try {
-      const result = await createBooking(bookingData);
-      console.log("✅ Booking result:", result);
+      let result;
+
+      // If editing, use In-Place UPDATE to prevent row churn/duplication
+      if (editingBooking && editingBooking.originalId) {
+          console.log("✏️ Editing: Updating existing row...", editingBooking.originalId);
+          try {
+             // Construct updated data object
+             // BookingModal sends start_time/end_time as ISO strings
+             const rawStart = bookingData.start || bookingData.start_time;
+             const rawEnd = bookingData.end || bookingData.end_time;
+             
+             const startD = new Date(rawStart);
+             const endD = new Date(rawEnd);
+             
+             if (isNaN(startD.getTime()) || isNaN(endD.getTime())) {
+                 throw new Error("Invalid date/time provided for update");
+             }
+
+             const updateData = {
+                 ...bookingData,
+                 start: startD,
+                 end: endD
+             };
+
+             await updateBooking(editingBooking.originalId, editingBooking.date, updateData);
+             console.log("✅ Update successful");
+             result = { success: true, updated: true };
+          } catch (updateErr) {
+             console.error("Failed to update booking", updateErr);
+             throw new Error(updateErr.message);
+          }
+      } else {
+          // Create new
+          result = await createBooking(bookingData);
+          console.log("✅ Booking result:", result);
+      }
       
       // Wait a moment for Google Sheets to update before refreshing
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -107,34 +163,38 @@ const Dashboard = () => {
       
       // Close booking modal
       setSelectedRoom(null);
+      setNewBooking(result);
+      setBookingSuccessOpen(true);
       
-      // Show success toast
-      setToast({
-        type: "success",
-        message: t('bookingSuccessfulToast', { rowNumber: result?.rowNumber || t('theSheet') }),
-      });
-
-      // Show success dialog with link to the row
-      if (result && result.success) {
-        const sheetUrl = `https://docs.google.com/spreadsheets/d/${result.sheetId}/edit#gid=${result.gid}&range=${result.range}`;
-        setAlertDialog({
-          type: "success",
-          title: t('bookingSuccessful'),
-          message: t('bookingAddedToRow', { rowNumber: result.rowNumber }),
-          link: {
-            url: sheetUrl,
-            text: t('viewInGoogleSheets'),
-          },
-        });
+      // If we have a direct result structure for sheetUrl logic (created booking)
+      if (result && result.sheetId && result.gid && result.range) {
+         const sheetUrl = `https://docs.google.com/spreadsheets/d/${result.sheetId}/edit#gid=${result.gid}&range=${result.range}`;
+         setAlertDialog({
+           type: "success",
+           title: t('bookingSuccessful'),
+           message: t('bookingAddedToRow', { rowNumber: result.rowNumber }),
+           link: {
+             url: sheetUrl,
+             text: t('viewInGoogleSheets'),
+           },
+         });
+      } else if (result && result.updated) {
+         // Updated booking case
+         setAlertDialog({
+           type: "success",
+           title: t('bookingSuccessful'),
+           message: t('bookingUpdatedToast'), 
+           link: null,
+         });
       } else {
-        // Fallback: show success even if result structure is unexpected
-        console.warn("⚠️ Unexpected result structure:", result);
-        setAlertDialog({
-          type: "success",
-          title: t('bookingSuccessful'),
-          message: t('bookingCreatedSuccessfully'),
-          link: null,
-        });
+         // Fallback for unexpected result structure
+         console.warn("⚠️ Unexpected result structure:", result);
+         setAlertDialog({
+           type: "success",
+           title: t('bookingSuccessful'),
+           message: t('bookingCreatedSuccessfully'),
+           link: null,
+         });
       }
     } catch (error) {
       console.error("❌ Booking failed", error);
@@ -336,7 +396,13 @@ const Dashboard = () => {
         {/* Room Schedule Calendar - Full Width in Grid */}
         {!loading && rooms.length > 0 && (
           <div className="w-full mb-6" style={{ gridColumn: '1 / -1' }}>
-            <LibraryRoomCalendar rooms={rooms} bookings={bookings} />
+            <LibraryRoomCalendar 
+              rooms={rooms} 
+              bookings={bookings} 
+              onRefresh={loadData}
+              onEditBooking={handleEditBooking}
+              onShowToast={setToast}
+            />
           </div>
         )}
 
@@ -376,12 +442,14 @@ const Dashboard = () => {
       {selectedRoom && (
         <BookingModal 
           room={selectedRoom}
+          rooms={rooms}
           timeSlots={timeSlots}
           bookings={bookings}
           fixedSchedules={fixedSchedules}
           onClose={() => setSelectedRoom(null)} 
           onConfirm={handleBookingConfirm}
           language={language}
+          initialData={editingBooking}
         />
       )}
 

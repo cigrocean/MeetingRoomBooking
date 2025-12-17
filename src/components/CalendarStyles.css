@@ -130,7 +130,11 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
 }
 
-.rbc-event-content { font-size: 0.85rem; font-weight: 600; }
+.rbc-event-content { 
+  font-size: 0.85rem; 
+  font-weight: 600;
+  color: white !important;
+}
 .rbc-event-label { display: none !important; }
 
 /* --- CURRENT TIME --- */

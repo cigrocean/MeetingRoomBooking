@@ -6,6 +6,8 @@ export const translations = {
     roomSchedule: "Daily Room Schedule",
     realTimeStatus: "Real-time availability status",
     updated: "Updated",
+    roomSchedule: "Daily Room Schedule",
+    scheduleHint: "Select a booking to view, edit, or delete.",
     refresh: "Refresh",
     onlineUsers: "{count} Online",
 
@@ -23,7 +25,9 @@ export const translations = {
     smallRoom: "Small Room",
 
     // Booking Modal
+    bookingDetails: "Booking Details",
     bookMeetingRoom: "Book Meeting Room",
+    editBooking: "Edit Booking",
     close: "Close",
     meetingTitle: "Meeting Title (Staff Name)",
     meetingTitlePlaceholder: "e.g. Ocean",
@@ -35,7 +39,9 @@ export const translations = {
     date: "Date",
     time: "Time",
     confirmBooking: "Confirm Booking",
+    updateBooking: "Update Booking",
     booking: "Booking...",
+    updating: "Updating...",
 
     // Errors
     pleaseSelectValidDate: "Please select a valid date.",
@@ -69,10 +75,19 @@ export const translations = {
     bookingAddedToRow:
       "Your booking has been added to row {rowNumber} in the sheet.",
     bookingSuccessfulToast: "Booking successful! Added to row {rowNumber}.",
+    bookingUpdatedToast: "Booking updated successfully!",
     theSheet: "the sheet",
     bookingFailedToast: "Booking failed. Please try again.",
     errorOccurred:
       "An error occurred while creating your booking. Please try again.",
+    
+    // Safety Confirms
+    typeToConfirmDelete: "Type 'DELETE' to confirm",
+    typeToConfirmUpdate: "Type 'UPDATE' to confirm",
+    deleteConfirmationPlaceholder: "Type DELETE",
+    updateConfirmationPlaceholder: "Type UPDATE",
+    confirmAction: "Confirm",
+    cancelAction: "Cancel",
     viewInGoogleSheets: "View in Google Sheets",
     done: "Done",
 
@@ -126,6 +141,8 @@ export const translations = {
     confirmDeleteSchedule: "Are you sure you want to delete this fixed schedule?",
     failedToLoadSchedules: "Failed to load fixed schedules",
     failedToDeleteSchedule: "Failed to delete fixed schedule",
+    failedToDeleteBooking: "Failed to delete booking",
+    bookingDeletedSuccessfully: "Booking deleted successfully",
     failedToSaveSchedule: "Failed to save fixed schedule",
     day: "Day",
     cannotCreateFixedScheduleConflict: "Cannot create fixed schedule: conflicts with existing booking on {date} ({staff}) from {startTime} to {endTime}",
@@ -138,6 +155,8 @@ export const translations = {
     manageAllFixedSchedules: "Manage all fixed schedules",
     back: "Back",
     gracePeriodNote: "Note: You can proceed with booking if the time has passed by less than 5 minutes.",
+    confirmDeleteBooking: "Are you sure you want to delete this booking?",
+    fixedScheduleManagementNote: 'Matched Fixed Schedule. Use "Manage Fixed Schedules" to edit.',
     
     // Network Guard
     verifyingNetwork: "Verifying network security...",
@@ -170,6 +189,8 @@ export const translations = {
     roomSchedule: "일별 회의실 일정",
     realTimeStatus: "실시간 예약 현황",
     updated: "업데이트",
+    roomSchedule: "일별 회의실 일정",
+    scheduleHint: "예약을 선택하여 상세 정보를 확인하거나 수정/삭제하세요.",
     refresh: "새로고침",
     onlineUsers: "{count}명 접속 중",
 
@@ -187,7 +208,9 @@ export const translations = {
     smallRoom: "소형 회의실",
 
     // Booking Modal
+    bookingDetails: "상세 예약 정보",
     bookMeetingRoom: "회의실 예약",
+    editBooking: "예약 수정",
     close: "닫기",
     meetingTitle: "회의 제목 (직원 이름)",
     meetingTitlePlaceholder: "예: Ocean",
@@ -199,7 +222,9 @@ export const translations = {
     date: "날짜",
     time: "시간",
     confirmBooking: "예약 확인",
+    updateBooking: "예약 수정",
     booking: "예약 중...",
+    updating: "수정 중...",
 
     // Errors
     pleaseSelectValidDate: "유효한 날짜를 선택해주세요.",
@@ -237,9 +262,18 @@ export const translations = {
     bookingCreatedSuccessfully: "예약이 성공적으로 생성되었습니다.",
     bookingAddedToRow: "예약이 시트의 {rowNumber}행에 추가되었습니다.",
     bookingSuccessfulToast: "예약 성공! {rowNumber}행에 추가되었습니다.",
+    bookingUpdatedToast: "예약이 성공적으로 수정되었습니다!",
     theSheet: "시트",
     bookingFailedToast: "예약에 실패했습니다. 다시 시도해주세요.",
     errorOccurred: "예약 생성 중 오류가 발생했습니다. 다시 시도해주세요.",
+    
+    // Safety Confirms
+    typeToConfirmDelete: "'DELETE'를 입력하여 확인",
+    typeToConfirmUpdate: "'UPDATE'를 입력하여 확인",
+    deleteConfirmationPlaceholder: "DELETE 입력",
+    updateConfirmationPlaceholder: "UPDATE 입력",
+    confirmAction: "확인",
+    cancelAction: "취소",
     viewInGoogleSheets: "Google 시트에서 보기",
     done: "완료",
 
@@ -293,6 +327,8 @@ export const translations = {
     confirmDeleteSchedule: "이 고정 일정을 삭제하시겠습니까?",
     failedToLoadSchedules: "고정 일정을 불러오는데 실패했습니다",
     failedToDeleteSchedule: "고정 일정을 삭제하는데 실패했습니다",
+    failedToDeleteBooking: "예약을 삭제하는데 실패했습니다",
+    bookingDeletedSuccessfully: "예약이 성공적으로 삭제되었습니다",
     failedToSaveSchedule: "고정 일정을 저장하는데 실패했습니다",
     day: "요일",
     cannotCreateFixedScheduleConflict: "고정 일정을 생성할 수 없습니다: {date} ({staff})의 기존 예약과 충돌합니다 ({startTime} ~ {endTime})",
@@ -305,6 +341,8 @@ export const translations = {
     manageAllFixedSchedules: "모든 고정 일정 관리",
     back: "뒤로",
     gracePeriodNote: "참고: 시작 시간이 5분 이내로 지났다면 예약을 진행할 수 있습니다.",
+    confirmDeleteBooking: "이 예약을 삭제하시겠습니까?",
+    fixedScheduleManagementNote: '고정 일정입니다. 편집하려면 "고정 일정 관리"를 사용하세요.',
     
     // Network Guard
     verifyingNetwork: "네트워크 보안 확인 중...",
