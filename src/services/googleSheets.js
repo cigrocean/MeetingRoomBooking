@@ -1083,43 +1083,9 @@ export const createBooking = async (booking) => {
   let roomNhaTrang = "";
   let roomDaLat = "";
 
-  if (referenceRow) {
-    // Check what value is used for rooms in existing rows
-    const nhaTrangValue = referenceRow[3]?.toString().trim();
-    const daLatValue = referenceRow[4]?.toString().trim();
-
-    console.log(
-      `🔍 Found reference row - NHA TRANG: "${nhaTrangValue}", DA LAT: "${daLatValue}"`
-    );
-
-    // Use the exact value format from the reference row
-    // If reference row doesn't have the room we need, check sampleRowWithRoom specifically
-    if (booking.room_id === "nha-trang") {
-      if (nhaTrangValue) {
-        roomNhaTrang = nhaTrangValue; // Use the exact format found
-      } else if (sampleRowWithRoom && sampleRowWithRoom[3]) {
-        // Fallback to sample row if reference doesn't have it
-        roomNhaTrang = sampleRowWithRoom[3].toString().trim();
-      } else {
-        roomNhaTrang = "NHA TRANG"; // Final fallback
-      }
-    }
-
-    if (booking.room_id === "da-lat") {
-      if (daLatValue) {
-        roomDaLat = daLatValue; // Use the exact format found
-      } else if (sampleRowWithRoom && sampleRowWithRoom[4]) {
-        // Fallback to sample row if reference doesn't have it
-        roomDaLat = sampleRowWithRoom[4].toString().trim();
-      } else {
-        roomDaLat = "DA LAT"; // Final fallback
-      }
-    }
-  } else {
-    // No reference row found, use room names (most common dropdown format)
-    roomNhaTrang = booking.room_id === "nha-trang" ? "NHA TRANG" : "";
-    roomDaLat = booking.room_id === "da-lat" ? "DA LAT" : "";
-  }
+  // Force standard format to prevent "MEETING ROOM" prefix accumulation
+  if (booking.room_id === "nha-trang") roomNhaTrang = "NHA TRANG";
+  if (booking.room_id === "da-lat") roomDaLat = "DA LAT";
 
   console.log(
     `🏠 Using room values - NHA TRANG: "${roomNhaTrang}", DA LAT: "${roomDaLat}"`
