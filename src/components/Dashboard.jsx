@@ -30,7 +30,7 @@ const Dashboard = () => {
   const [showFixedScheduleModal, setShowFixedScheduleModal] = useState(false);
   const [alertDialog, setAlertDialog] = useState(null); // { type: 'success'|'error', title, message, link }
   const [toast, setToast] = useState(null); // { type: 'success'|'error', message }
-  const [sheetUrl, setSheetUrl] = useState('#');
+  const [sheetUrl, setSheetUrl] = useState(`https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || ''}/edit`);
 
   const loadData = async () => {
     // 1. Try to load from cache first for instant UI
