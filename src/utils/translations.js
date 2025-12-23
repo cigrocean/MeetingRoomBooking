@@ -181,6 +181,21 @@ export const translations = {
     permissionDenied: "Permission Denied",
     retryLocation: "Retry Location Access",
     enableLocationHelp: "Please allow Location access in your browser's site settings (address bar) and try again.",
+    
+    // New Network UI
+    newDeviceDetected: "New Device Detected",
+    oneTimeAuthMessage: "You're at the office but office network IP has changed recently, you're the first client so please authorize one time for all the clients in this network",
+    officeWifiPassword: "Office WiFi Password",
+    enterPassword: "Enter the Wi-Fi password of Cigro Litmers Endash (1-5) to authorize",
+    passwordPlaceholder: "Password...",
+    incorrectPassword: "Incorrect password",
+    verifying: "Authorizing...",
+    authorizeDevice: "Authorize Device",
+    status: "Status",
+    unauthorizedLocationMessage: "Access restricted. You must be physically present at the office to access this system.",
+    unauthorizedDefaultMessage: "Unable to verify application security requirements.",
+    unauthorized_location: "Unauthorized Location",
+    unauthorized_ip: "Unauthorized IP",
   },
   ko: {
     // Dashboard
@@ -367,6 +382,21 @@ export const translations = {
     permissionDenied: "권한 거부됨",
     retryLocation: "위치 권한 재요청",
     enableLocationHelp: "브라우저 주소창의 사이트 설정에서 위치 권한을 허용하고 다시 시도해주세요.",
+    
+    // New Network UI
+    newDeviceDetected: "새로운 기기 감지됨",
+    oneTimeAuthMessage: "사무실에 계시지만 오피스 네트워크 IP가 최근 변경되었습니다. 첫 번째 클라이언트이므로, 이 네트워크의 모든 클라이언트를 위해 한 번만 인증해 주세요.",
+    officeWifiPassword: "사무실 WiFi 비밀번호",
+    enterPassword: "Cigro Litmers Endash (1-5)의 Wi-Fi 비밀번호를 입력하여 인증하세요",
+    passwordPlaceholder: "비밀번호...",
+    incorrectPassword: "비밀번호가 올바르지 않습니다",
+    verifying: "인증 중...",
+    authorizeDevice: "기기 인증",
+    status: "상태",
+    unauthorizedLocationMessage: "접근 제한됨. 이 시스템에 접속하려면 사무실에 위치해야 합니다.",
+    unauthorizedDefaultMessage: "애플리케이션 보안 요구사항을 확인할 수 없습니다.",
+    unauthorized_location: "위치 인증 실패",
+    unauthorized_ip: "IP 인증 실패",
   },
 };
 

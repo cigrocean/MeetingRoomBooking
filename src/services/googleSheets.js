@@ -3932,3 +3932,145 @@ export const deleteFixedSchedule = async (scheduleId) => {
   console.log("✅ Delete response:", result);
   return { success: true };
 };
+
+// ==========================================
+// NETWORK AUTHENTICATION (Dynamic IP Guard)
+// ==========================================
+
+const NETWORKS_SHEET_TITLE = "AUTHORIZED_NETWORKS";
+
+// Ensure the AUTHORIZED_NETWORKS sheet exists, create if not
+const ensureNetworksSheet = async (accessToken) => {
+  try {
+    // 1. Get Spreadsheet Metadata to check sheets
+    const metaResponse = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    
+    if (!metaResponse.ok) throw new Error("Failed to fetch spreadsheet metadata");
+    const meta = await metaResponse.json();
+    const existing = meta.sheets.find(s => s.properties.title === NETWORKS_SHEET_TITLE);
+    
+    if (existing) return existing.properties.sheetId;
+
+    // 2. Create if missing
+    console.log(`Creating sheet: ${NETWORKS_SHEET_TITLE}...`);
+    const createResponse = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          requests: [{
+            addSheet: {
+              properties: {
+                title: NETWORKS_SHEET_TITLE,
+                gridProperties: { rowCount: 1000, columnCount: 5 }
+              }
+            }
+          }]
+        }),
+      }
+    );
+    
+    if (!createResponse.ok) throw new Error("Failed to create networks sheet");
+    const createResult = await createResponse.json();
+    const newSheetId = createResult.replies[0].addSheet.properties.sheetId;
+    
+    // 3. Add Header Row
+    await fetch(
+       `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NETWORKS_SHEET_TITLE}!A1:C1:append?valueInputOption=USER_ENTERED`,
+       {
+         method: "POST",
+         headers: {
+           Authorization: `Bearer ${accessToken}`,
+           "Content-Type": "application/json",
+         },
+         body: JSON.stringify({
+            values: [["IP Address", "Date Authorized", "User Agent"]]
+         })
+       }
+    );
+    
+    return newSheetId;
+
+  } catch (e) {
+    console.error("Error ensuring networks sheet:", e);
+    throw e;
+  }
+};
+
+export const fetchAuthorizedNetworks = async () => {
+  try {
+    const accessToken = await getAccessToken();
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NETWORKS_SHEET_TITLE}!A:A`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    if (!response.ok) {
+       // If sheet doesn't exist, it's fine, just return empty
+       const text = await response.text();
+       if (text.includes("Unable to parse range") || response.status === 400 || response.status === 404) {
+          return [];
+       }
+       throw new Error(`Failed to fetch networks: ${text}`);
+    }
+
+    const data = await response.json();
+    if (!data.values || data.values.length <= 1) return []; // Header only
+
+    // Return simple array of IPs (skip header)
+    return data.values.slice(1).map(row => row[0]).filter(ip => ip);
+  } catch (e) {
+    console.warn("Failed to fetch authorized networks (sheet might not exist yet):", e);
+    return [];
+  }
+};
+
+export const authorizeNetwork = async (ip) => {
+  try {
+    const accessToken = await getAccessToken();
+    await ensureNetworksSheet(accessToken);
+    
+    // Check if already exists (basic check to avoid duplicates)
+    // Actually fetchAuthorizedNetworks does this, but for write safety:
+    
+    // Append the IP
+    const values = [
+      [
+        ip, 
+        new Date().toISOString(), 
+        navigator.userAgent
+      ]
+    ];
+
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NETWORKS_SHEET_TITLE}!A:C:append?valueInputOption=USER_ENTERED`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ values }),
+      }
+    );
+    
+    if (!response.ok) throw new Error(await response.text());
+    
+    console.log(`✅ Authorized IP: ${ip}`);
+    return true;
+  } catch (e) {
+    console.error("Failed to authorize network:", e);
+    throw e;
+  }
+};
