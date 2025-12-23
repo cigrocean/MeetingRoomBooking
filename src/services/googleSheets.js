@@ -4010,9 +4010,10 @@ export const fetchAuthorizedNetworks = async () => {
   try {
     const accessToken = await getAccessToken();
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NETWORKS_SHEET_TITLE}!A:A`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NETWORKS_SHEET_TITLE}!A:A?t=${new Date().getTime()}`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
+        cache: 'no-store'
       }
     );
 
