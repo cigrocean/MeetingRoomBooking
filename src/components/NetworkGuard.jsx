@@ -96,8 +96,8 @@ const NetworkGuard = ({ children }) => {
 
   const checkLocation = (ip) => {
      if (!ALLOWED_LOCATION || ALLOWED_LOCATION.length !== 2) {
-         console.warn("Location config missing.");
-         setErrorDetails("Location configuration missing.");
+         console.warn("Location config missing.", import.meta.env.VITE_ALLOWED_LOCATION);
+         setErrorDetails(`Location configuration missing. R: ${import.meta.env.VITE_ALLOWED_LOCATION}`);
          setStatus('error');
          return;
      }
