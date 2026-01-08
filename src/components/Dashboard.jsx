@@ -270,7 +270,7 @@ const Dashboard = () => {
             <span style={{ color: 'var(--color-text)' }}>Ocean LITMERS</span>
             {' · '}
             <a 
-              href="https://github.com/cigrocean/SwaggerNav" 
+              href="https://github.com/oceanondawave/SwaggerNav" 
               target="_blank" 
               rel="noopener noreferrer"
               className="underline transition-colors"

@@ -103,7 +103,8 @@ export const translations = {
       "Failed to access the sheet for {month} {year}. {error}",
 
     // Credit Section
-    vibeCodedBy: "Yes, this was 100% vibe-coded by",
+    vibeCodedBy: "Yes, this was 100% vibe-coded by, and is a legacy work of",
+    contributionWelcome: ". He no longer maintains it so feel free to contribute to it.",
     checkAnotherWork: "Check another work — SwaggerNav",
     github: "GitHub",
 
@@ -304,7 +305,8 @@ export const translations = {
       "{month} {year}의 시트에 액세스하는 데 실패했습니다. {error}",
 
     // Credit Section
-    vibeCodedBy: "네, 이것은 100% 바이브 코딩으로 만들어졌습니다. 제작자:",
+    vibeCodedBy: "네, 이것은 100% 바이브 코딩으로 만들어졌으며, 다음의 레거시 작품입니다:",
+    contributionWelcome: ". 그는 더 이상 이 프로젝트를 유지 관리하지 않으므로 자유롭게 기여해 주세요.",
     checkAnotherWork: "다른 작품 보기 — SwaggerNav",
     github: "GitHub",
 
