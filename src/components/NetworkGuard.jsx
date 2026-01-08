@@ -96,8 +96,8 @@ const NetworkGuard = ({ children }) => {
 
   const checkLocation = (ip) => {
      if (!ALLOWED_LOCATION || ALLOWED_LOCATION.length !== 2) {
-         console.warn("Location config missing.", import.meta.env.VITE_ALLOWED_LOCATION);
-         setErrorDetails(`Location configuration missing. R: ${import.meta.env.VITE_ALLOWED_LOCATION}`);
+         console.warn("Location config missing.");
+         setErrorDetails("Location configuration missing.");
          setStatus('error');
          return;
      }
@@ -268,13 +268,6 @@ const NetworkGuard = ({ children }) => {
                     ? t('unauthorizedLocationMessage')
                     : t('unauthorizedDefaultMessage')}
             </p>
-
-            {/* Debug Error Details */}
-            {status === 'error' && errorDetails && (
-              <div className="mb-4 p-3 bg-red-50 rounded border border-red-100 text-left">
-                <p className="text-[10px] font-mono text-red-600 break-all">{errorDetails}</p>
-              </div>
-            )}
 
             <div 
               className="bg-slate-50 p-3 text-left border border-slate-100"
