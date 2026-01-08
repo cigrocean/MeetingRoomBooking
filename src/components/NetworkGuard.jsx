@@ -72,10 +72,15 @@ const NetworkGuard = ({ children }) => {
 
        // 2. Check Authorized Networks (Shared Sheet)
        // This is the "Remember my IP" feature
-       const authorizedOps = await fetchAuthorizedNetworks();
-       if (authorizedOps.includes(ip)) {
-           setStatus('authorized');
-           return;
+       try {
+         const authorizedOps = await fetchAuthorizedNetworks();
+         if (authorizedOps.includes(ip)) {
+             setStatus('authorized');
+             return;
+         }
+       } catch (netErr) {
+         // If Sheet API fails (e.g. quota, permissions, network), just log and continue to Location Check
+         console.warn("Failed to check authorized networks, falling back to location:", netErr);
        }
 
        // 3. New IP detected -> Check Location first
@@ -263,6 +268,13 @@ const NetworkGuard = ({ children }) => {
                     ? t('unauthorizedLocationMessage')
                     : t('unauthorizedDefaultMessage')}
             </p>
+
+            {/* Debug Error Details */}
+            {status === 'error' && errorDetails && (
+              <div className="mb-4 p-3 bg-red-50 rounded border border-red-100 text-left">
+                <p className="text-[10px] font-mono text-red-600 break-all">{errorDetails}</p>
+              </div>
+            )}
 
             <div 
               className="bg-slate-50 p-3 text-left border border-slate-100"
