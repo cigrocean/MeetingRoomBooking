@@ -268,6 +268,7 @@ const Dashboard = () => {
           <p className="text-xs m-0" style={{ color: 'var(--color-text-muted)' }}>
             {t('vibeCodedBy')}{' '}
             <span style={{ color: 'var(--color-text)' }}>Ocean LITMERS</span>
+            {t('contributionWelcome')}
             {' · '}
             <a 
               href="https://github.com/oceanondawave/SwaggerNav" 
