@@ -107,6 +107,7 @@ export const translations = {
     contributionWelcome: ". He no longer maintains it so feel free to contribute to it.",
     checkAnotherWork: "Check another work — SwaggerNav",
     github: "GitHub",
+    checkCheckInApp: "Cigro Check-in App",
 
     // View Sheet
     viewSheet: "View Google Sheet",
@@ -309,6 +310,7 @@ export const translations = {
     contributionWelcome: ". 그는 더 이상 이 프로젝트를 유지 관리하지 않으므로 자유롭게 기여해 주세요.",
     checkAnotherWork: "다른 작품 보기 — SwaggerNav",
     github: "GitHub",
+    checkCheckInApp: "Cigro 체크인 앱",
 
     // View Sheet
     viewSheet: "Google 시트 보기",
