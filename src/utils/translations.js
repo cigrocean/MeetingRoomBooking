@@ -106,8 +106,8 @@ export const translations = {
     vibeCodedBy: "Yes, this was 100% vibe-coded by, and is a legacy work of",
     contributionWelcome: ". He no longer maintains it so feel free to contribute to it.",
     checkAnotherWork: "Check another work — SwaggerNav",
-    github: "GitHub",
     checkCheckInApp: "Cigro Check-in App",
+    github: "GitHub",
 
     // View Sheet
     viewSheet: "View Google Sheet",
