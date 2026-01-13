@@ -283,18 +283,6 @@ const Dashboard = () => {
             </a>
             {' · '}
             <a 
-              href="https://github.com/cigrocean/MeetingRoomBooking" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="underline transition-colors"
-              style={{ color: 'var(--color-primary)' }}
-              onMouseEnter={(e) => e.target.style.color = 'var(--color-primary-hover)'}
-              onMouseLeave={(e) => e.target.style.color = 'var(--color-primary)'}
-            >
-              {t('github')}
-            </a>
-            {' · '}
-            <a 
               href="https://cigro-checkin.vercel.app/" 
               target="_blank" 
               rel="noopener noreferrer"
@@ -304,6 +292,18 @@ const Dashboard = () => {
               onMouseLeave={(e) => e.target.style.color = 'var(--color-primary)'}
             >
               {t('checkCheckInApp')}
+            </a>
+            {' · '}
+            <a 
+              href="https://github.com/cigrocean/MeetingRoomBooking" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="underline transition-colors"
+              style={{ color: 'var(--color-primary)' }}
+              onMouseEnter={(e) => e.target.style.color = 'var(--color-primary-hover)'}
+              onMouseLeave={(e) => e.target.style.color = 'var(--color-primary)'}
+            >
+              {t('github')}
             </a>
           </p>
         </div>
